@@ -1424,5 +1424,3 @@ const Footer = () => (
     <p className="text-orange-600 font-tech text-xs relative z-10 tracking-[0.2em] font-bold uppercase drop-shadow-md">DESARROLLADO POR TECNOBYTE LLC. TODOS LOS DERECHOS RESERVADOS.</p>
   </footer>
 );
-
-export default App;
