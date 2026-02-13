@@ -1201,6 +1201,6 @@ const Footer = () => (
     <div className="flex justify-center items-center gap-3 mb-8 opacity-90 relative z-10">
       <img src={nexusLogo} alt="NEXUS STATION" className="h-24 object-contain logo-hyper-anim" />
     </div>
-    <p className="text-gray-500 font-tech text-xs relative z-10">© 2026 NEXUS STATION. TODOS LOS DERECHOS RESERVADOS.</p>
+    <p className="text-gray-500 font-tech text-xs relative z-10">© 2026 NEXUS STATION, DESARROLLADO POR TECNOBYTE LLC. TODOS LOS DERECHOS RESERVADOS.</p>
   </footer>
 );
