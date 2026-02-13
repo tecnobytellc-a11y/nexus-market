@@ -26,13 +26,13 @@ import {
   getDocs
 } from 'firebase/firestore';
 import { 
-  Shield, User, ShoppingBag, LogOut, Plus, Edit, Trash2, 
+  User, ShoppingBag, LogOut, Plus, Edit, Trash2, 
   CheckCircle, AlertTriangle, Gamepad2, Camera, FileText, 
   Lock, Zap, Crosshair, Trophy, Diamond, X, Flame, Skull,
   ScanFace, IdCard, Upload, KeyRound, Eye, EyeOff, Globe, MapPin,
   CreditCard, Banknote, Receipt, Download, RefreshCw, MessageSquare, Send,
   ImageIcon, CheckSquare, Star, Search, ThumbsUp, ThumbsDown, Minus,
-  Mail, Phone, Smartphone, UserCheck, Key
+  Mail, Phone, Smartphone, UserCheck, Key, Shield
 } from 'lucide-react';
 
 // --- 1. CONFIGURACIÓN FIREBASE REAL ---
@@ -107,7 +107,7 @@ const getIP = async () => {
   }
 };
 
-// --- 3. ESTILOS CSS MASTER (TODAS LAS ANIMACIONES RESTAURADAS) ---
+// --- 3. ESTILOS CSS MASTER (VISUAL ARMAGEDDON) ---
 const Styles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
@@ -117,13 +117,13 @@ const Styles = () => (
       --ff-orange: #FF4500;
       --ff-red: #8B0000;
       --ff-dark: #050505;
-      --ff-panel: rgba(15, 15, 20, 0.95);
+      --ff-panel: rgba(15, 15, 20, 0.90);
       --ff-cyan: #00FFFF;
     }
 
     body { background-color: var(--ff-dark); color: white; font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
 
-    /* ANIMATIONS & UTILS */
+    /* --- ANIMACIONES BÁSICAS --- */
     @keyframes slideInUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @keyframes pulseGlow { 
       0%, 100% { box-shadow: 0 0 15px rgba(255, 69, 0, 0.1); border-color: rgba(255, 255, 255, 0.1); }
@@ -137,39 +137,54 @@ const Styles = () => (
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #FF4500; border-radius: 3px; }
 
-    /* LOGO HYPER ANIMATION (GLITCH + FLASH + SHAKE) */
-    @keyframes logo-shake {
-       0%, 100% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg) drop-shadow(0 0 10px cyan); }
-       10% { transform: translate(-2px, 2px) scale(1.02); filter: hue-rotate(90deg) drop-shadow(0 0 20px blue); }
-       20% { transform: translate(2px, -2px) scale(1.05); filter: hue-rotate(180deg) drop-shadow(0 0 30px magenta); }
-       30% { transform: translate(-3px, 0) scale(0.98); opacity: 0.8; }
-       40% { transform: translate(3px, 2px) scale(1.1); filter: hue-rotate(270deg) drop-shadow(0 0 40px red); }
-       50% { transform: translate(0, -3px) scale(1.05); opacity: 1; }
+    /* --- LOGO ULTRA ANIMADO --- */
+    @keyframes logo-glitch-skew {
+      0% { transform: skew(0deg); }
+      20% { transform: skew(-2deg); }
+      40% { transform: skew(2deg); }
+      60% { transform: skew(-1deg); }
+      80% { transform: skew(1deg); }
+      100% { transform: skew(0deg); }
     }
-    .logo-hyper-anim {
-       animation: logo-shake 3s infinite;
-       transition: all 0.2s;
+    @keyframes logo-flash {
+      0%, 100% { opacity: 1; filter: brightness(1) drop-shadow(0 0 5px cyan); }
+      50% { opacity: 0.8; filter: brightness(1.5) drop-shadow(0 0 20px cyan); }
+      52% { opacity: 0.4; filter: brightness(2) drop-shadow(0 0 30px white); }
+      54% { opacity: 1; filter: brightness(1) drop-shadow(0 0 5px cyan); }
     }
-    .logo-hyper-anim:hover {
-       animation-duration: 0.5s;
-       filter: brightness(1.5) drop-shadow(0 0 50px cyan);
+    
+    .logo-ultra-anim {
+      animation: 
+        logo-glitch-skew 3s infinite linear alternate-reverse,
+        logo-flash 2s infinite steps(10),
+        floatChar 4s infinite ease-in-out;
+      filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.8));
     }
 
-    /* BACKGROUND "VIDEO" EFFECT */
-    @keyframes grid-move {
-      0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
-      100% { transform: perspective(500px) rotateX(60deg) translateY(100px); }
+    /* --- METEORITOS --- */
+    @keyframes meteor-fall {
+      0% { transform: translateX(300px) translateY(-300px); opacity: 1; }
+      70% { opacity: 1; }
+      100% { transform: translateX(-500px) translateY(500px); opacity: 0; }
     }
-    .cyber-grid {
-      position: absolute; width: 200%; height: 200%; left: -50%; top: -50%;
-      background-image: 
-        linear-gradient(rgba(0, 255, 255, 0.3) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.3) 1px, transparent 1px);
-      background-size: 100px 100px;
-      transform: perspective(500px) rotateX(60deg);
-      animation: grid-move 5s linear infinite;
-      opacity: 0.15;
-      z-index: -10;
+    .meteor {
+      position: absolute;
+      width: 100px; height: 2px;
+      background: linear-gradient(to left, #ff4500, transparent);
+      transform: rotate(-45deg);
+      box-shadow: 0 0 20px #ff0000;
+      opacity: 0;
+    }
+
+    /* --- FUEGO & CENIZAS --- */
+    .ember {
+      position: absolute; width: 4px; height: 4px; background: #FF4500;
+      box-shadow: 0 0 10px #FFD700; border-radius: 50%;
+    }
+    @keyframes emberRise { 
+      0% { transform: translateY(110vh) scale(0.5); opacity: 0; } 
+      20% { opacity: 1; transform: translateY(80vh) scale(1); }
+      100% { transform: translateY(-10vh) translateX(50px) scale(0.2); opacity: 0; } 
     }
 
     /* HUD PANELS */
@@ -179,32 +194,10 @@ const Styles = () => (
       position: relative;
       clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
       backdrop-filter: blur(15px);
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      box-shadow: 0 0 30px rgba(0,0,0,0.7);
       transition: all 0.3s;
     }
-    .hud-panel:hover { border-color: var(--ff-yellow); box-shadow: 0 0 40px rgba(255, 69, 0, 0.3); transform: translateY(-2px); }
-
-    .hud-corner-decoration::before { content: ''; position: absolute; top: 0; left: 0; width: 30px; height: 3px; background: var(--ff-yellow); z-index: 2; box-shadow: 0 0 10px var(--ff-yellow); }
-    .hud-corner-decoration::after { content: ''; position: absolute; bottom: 0; right: 0; width: 30px; height: 3px; background: var(--ff-orange); z-index: 2; box-shadow: 0 0 10px var(--ff-orange); }
-
-    /* BUTTONS & INPUTS */
-    .btn-ff {
-      background: linear-gradient(90deg, #FF4500 0%, #FF0000 100%);
-      color: white; font-family: 'Black Ops One', cursive; text-transform: uppercase;
-      border: none; clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
-      transition: all 0.2s; position: relative; overflow: hidden; cursor: pointer;
-      text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
-    }
-    .btn-ff:hover { transform: scale(1.02); box-shadow: 0 0 25px var(--ff-orange); filter: brightness(1.2); }
-    .btn-ff:disabled { background: gray; cursor: not-allowed; filter: grayscale(1); box-shadow: none; }
-
-    .btn-secondary-ff {
-      background: rgba(0,0,0,0.8); border: 1px solid var(--ff-cyan); color: var(--ff-cyan);
-      font-family: 'Orbitron', sans-serif; text-transform: uppercase;
-      clip-path: polygon(0 0, 90% 0, 100% 30%, 100% 100%, 10% 100%, 0 70%);
-      transition: all 0.2s; cursor: pointer;
-    }
-    .btn-secondary-ff:hover { background: rgba(0, 255, 255, 0.2); box-shadow: 0 0 20px var(--ff-cyan); text-shadow: 0 0 10px var(--ff-cyan); }
+    .hud-panel:hover { border-color: var(--ff-yellow); box-shadow: 0 0 50px rgba(255, 69, 0, 0.4); transform: scale(1.01); }
 
     /* INPUTS HUD */
     .input-wrapper { position: relative; transition: all 0.3s; }
@@ -221,7 +214,25 @@ const Styles = () => (
        box-shadow: 0 0 20px rgba(255, 69, 0, 0.2); 
     }
 
-    /* GLITCH TEXT */
+    /* BOTONES */
+    .btn-ff {
+      background: linear-gradient(90deg, #FF4500 0%, #FF0000 100%);
+      color: white; font-family: 'Black Ops One', cursive; text-transform: uppercase;
+      border: none; clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+      transition: all 0.2s; position: relative; overflow: hidden; cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+    }
+    .btn-ff:hover { transform: scale(1.05); box-shadow: 0 0 30px var(--ff-orange); filter: brightness(1.2); }
+    .btn-ff:active { transform: scale(0.95); }
+    
+    .btn-secondary-ff {
+      background: rgba(0,0,0,0.8); border: 1px solid var(--ff-cyan); color: var(--ff-cyan);
+      font-family: 'Orbitron', sans-serif; text-transform: uppercase;
+      clip-path: polygon(0 0, 90% 0, 100% 30%, 100% 100%, 10% 100%, 0 70%);
+      transition: all 0.2s; cursor: pointer;
+    }
+    .btn-secondary-ff:hover { background: rgba(0, 255, 255, 0.2); box-shadow: 0 0 20px var(--ff-cyan); text-shadow: 0 0 10px var(--ff-cyan); }
+
+    /* TEXT GLITCH */
     .glitch { position: relative; display: inline-block; }
     .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; }
     .glitch::before { left: 2px; text-shadow: -2px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim 2s infinite linear alternate-reverse; }
@@ -420,30 +431,26 @@ const ChatSystem = ({ orderId, currentUserRole, currentUserId, orderStatus, onUp
   );
 };
 
-// --- 5. PERFIL PÚBLICO VENDEDOR (CON ARSENAL Y REPUTACIÓN) ---
+// --- 5. PERFIL PUBLICO ---
 const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
   const [profile, setProfile] = useState(null);
   const [salesCount, setSalesCount] = useState(0);
-  const [sellerListings, setSellerListings] = useState([]);
   const [ratings, setRatings] = useState([]);
+  const [sellerListings, setSellerListings] = useState([]);
 
   useEffect(() => {
     const load = async () => {
-      // Perfil
       const docSnap = await getDoc(doc(db, 'artifacts', appId, 'users', sellerId, 'profile', 'data'));
       if (docSnap.exists()) setProfile(docSnap.data());
       
-      // Ventas
       const qOrders = query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('seller.id', '==', sellerId), where('status', '==', 'completed'));
       const salesSnap = await getDocs(qOrders);
       setSalesCount(salesSnap.size);
 
-      // Arsenal
       const qListings = query(collection(db, 'artifacts', appId, 'public', 'data', 'listings'), where('sellerId', '==', sellerId));
       const listingsSnap = await getDocs(qListings);
       setSellerListings(listingsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
-      // Ratings
       const qRatings = query(collection(db, 'artifacts', appId, 'users', sellerId, 'ratings'), orderBy('createdAt', 'desc'));
       const ratingsSnap = await getDocs(qRatings);
       setRatings(ratingsSnap.docs.map(d => d.data()));
@@ -460,16 +467,14 @@ const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
           <div className="hud-corner-decoration"></div>
           
           <div className="flex flex-col md:flex-row gap-8">
-             {/* COLUMNA IZQ: INFO PERFIL */}
              <div className="w-full md:w-1/3">
                 <div className="flex flex-col items-center text-center mb-8">
-                   <div className="w-32 h-32 rounded-full border-4 border-orange-500 overflow-hidden mb-4 bg-black shadow-[0_0_30px_rgba(255,69,0,0.5)]">
+                   <div className="w-32 h-32 rounded-full border-4 border-orange-500 overflow-hidden mb-4 bg-black shadow-[0_0_50px_rgba(255,69,0,0.6)]">
                       {profile.kycData?.selfie ? <img src={profile.kycData.selfie} className="w-full h-full object-cover"/> : <User size={64} className="text-gray-500 m-auto mt-8"/>}
                    </div>
                    
                    <div className="flex items-center gap-2 justify-center flex-wrap">
                       <h2 className="text-3xl font-gamer text-white uppercase glitch" data-text={profile.publicUsername}>{profile.publicUsername}</h2>
-                      
                       {/* BADGE DE 1000 VENTAS */}
                       {salesCount >= 1000 && (
                          <div className="relative group">
@@ -483,7 +488,6 @@ const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
                          </div>
                       )}
                    </div>
-
                    <span className="text-cyan-400 font-tech tracking-widest text-sm uppercase flex items-center gap-1 mt-2"><Shield size={14}/> Comandante Verificado</span>
                 </div>
 
@@ -532,7 +536,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
                 </div>
              </div>
 
-             {/* COLUMNA DER: ARSENAL DISPONIBLE */}
+             {/* ARSENAL */}
              <div className="w-full md:w-2/3 border-l border-gray-700 pl-0 md:pl-8">
                 <h3 className="font-tech text-2xl text-white mb-6 uppercase flex items-center gap-2 border-b border-orange-600 pb-2">
                    <Flame className="text-orange-500"/> Arsenal Disponible ({sellerListings.length})
@@ -559,7 +563,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
   );
 };
 
-// --- 6. VISTA PRINCIPAL (MARKETPLACE + SEARCH) ---
+// --- 6. VISTA PRINCIPAL ---
 export default function App() {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -655,7 +659,7 @@ export default function App() {
   );
 }
 
-// --- 7. MODAL DE COMPRA (ORDEN, FACTURA, CHAT Y CALIFICACION) ---
+// --- 7. MODAL DE COMPRA ---
 const PurchaseModal = ({ item, onClose, showNotification }) => {
   const [step, setStep] = useState(1);
   const [buyerData, setBuyerData] = useState({ firstName: '', lastName: '', idNumber: '', email: '', whatsapp: '', country: '', state: '' });
@@ -842,7 +846,6 @@ const Navbar = ({ user, userData, setView, onLogout }) => (
   <nav className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-orange-600/50 shadow-[0_5px_40px_rgba(255,69,0,0.3)] animate-enter">
     <div className="container mx-auto px-4 h-24 flex justify-between items-center">
       <div className="flex items-center gap-3 cursor-pointer group select-none hover:scale-105 transition-transform" onClick={() => setView('home')}>
-        {/* ELIMINADO EL ESCUDO COMO PEDISTE */}
         <div className="flex flex-col">
           <div className="relative group">
             <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 animate-pulse"></div>
@@ -1112,7 +1115,7 @@ const RegisterForm = ({ setView, showNotification }) => {
       <h2 className="text-4xl font-gamer text-white mb-8 text-center flex items-center justify-center gap-4"><Shield className="text-orange-500" size={40}/> RECLUTAMIENTO DE ELITE</h2>
       <form onSubmit={handleRegister}>
         {step === 1 && (<div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div className="input-wrapper"><User className="w-5 h-5"/><input name="firstName" placeholder="Nombre *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><User className="w-5 h-5"/><input name="lastName" placeholder="Apellido *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Mail className="w-5 h-5"/><input name="email" placeholder="Email *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Smartphone className="w-5 h-5"/><input name="whatsapp" placeholder="Whatsapp *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><IdCard className="w-5 h-5"/><input name="idNumber" placeholder="DNI / Cédula *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><FileText className="w-5 h-5"/><input name="rif" placeholder="RIF (Opcional)" className="input-ff p-4 border-green-900/50 w-full" onChange={handleChange} /></div><div className="md:col-span-2 bg-black/40 p-4 border border-gray-700"><p className="text-xs text-cyan-400 mb-2 font-bold">SEGURIDAD DE ACCESO</p><div className="grid grid-cols-2 gap-4"><div className="input-wrapper"><Key className="w-5 h-5"/><input name="password" type="password" placeholder="Contraseña Maestra *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Key className="w-5 h-5"/><input name="confirmPassword" type="password" placeholder="Repetir Contraseña *" className="input-ff p-4 w-full" onChange={handleChange} /></div></div><div className="flex gap-2 mt-2 text-[10px] text-gray-500 uppercase"><span className={passStrength.length ? "text-green-500" : ""}>8+ Caracteres</span><span className={passStrength.upper ? "text-green-500" : ""}>Mayúscula</span><span className={passStrength.num ? "text-green-500" : ""}>Número</span><span className={passStrength.special ? "text-green-500" : ""}>Símbolo</span></div></div><button type="button" onClick={handleNextStep} className="btn-secondary-ff py-4 md:col-span-2 text-lg font-bold">SIGUIENTE FASE &gt;&gt;</button></div>)}
-        {step === 2 && (<div className="space-y-6"><div className="grid grid-cols-2 gap-4"><div className="bg-black/40 p-6 border border-gray-700 text-center relative group hover:border-orange-500 transition-colors"><ScanFace size={40} className="mx-auto mb-4 text-gray-500 group-hover:text-orange-500 transition-colors"/><p className="text-xs font-bold mb-2 uppercase tracking-wider">SELFIE EN VIVO *</p><label className="text-xs btn-secondary-ff p-2 cursor-pointer block">{kycData.selfie ? "REEMPLAZAR" : "ACTIVAR CÁMARA"} <input type="file" hidden accept="image/*" capture="user" onChange={e => handleKyc('selfie', e.target.files[0])}/></label></div><div className="bg-black/40 p-6 border border-gray-700 text-center relative group hover:border-orange-500 transition-colors"><IdCard size={40} className="mx-auto mb-4 text-gray-500 group-hover:text-orange-500 transition-colors"/><p className="text-xs font-bold mb-2 uppercase tracking-wider">DOCUMENTO ID *</p><label className="text-xs btn-secondary-ff p-2 cursor-pointer block">{kycData.docFront ? "REEMPLAZAR" : "ESCANEAR DOC"} <input type="file" hidden accept="image/*" onChange={e => handleKyc('docFront', e.target.files[0])}/></label></div></div><div className="input-wrapper"><UserCheck className="w-5 h-5"/><input name="publicUsername" placeholder="Alias Público *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Shield className="w-5 h-5"/><input name="adminName" placeholder="Nombre Admin *" className="input-ff p-4 w-full" onChange={handleChange} /></div><label className="flex items-center gap-3 text-sm text-gray-400 bg-orange-900/10 p-4 border border-orange-500/30 rounded cursor-pointer hover:bg-orange-900/20 transition-colors"><input type="checkbox" onChange={e => setLiveness(e.target.checked)} className="w-5 h-5 accent-orange-500"/> Confirmo que soy una persona real (Prueba de Vida)</label><div className="flex gap-4"><button type="button" onClick={() => setStep(1)} className="flex-1 btn-secondary-ff py-4 font-bold">ATRÁS</button><button disabled={loading} className="flex-[2] btn-ff py-4 text-xl shadow-[0_0_30px_rgba(255,69,0,0.5)] animate-pulse font-bold tracking-widest">{loading ? "ENCRIPTANDO..." : "FINALIZAR REGISTRO"}</button></div></div>)}
+        {step === 2 && (<div className="space-y-6"><div className="grid grid-cols-2 gap-4"><div className="bg-black/40 p-6 border border-gray-700 text-center relative group hover:border-orange-500 transition-colors"><ScanFace size={40} className="mx-auto mb-4 text-gray-500 group-hover:text-orange-500 transition-colors"/><p className="text-xs font-bold mb-2 uppercase tracking-wider">SELFIE EN VIVO *</p><label className="btn-secondary-ff py-2 px-6 cursor-pointer block text-xs tracking-widest">{kycData.selfie ? "REEMPLAZAR" : "ACTIVAR CÁMARA"} <input type="file" hidden accept="image/*" capture="user" onChange={e => handleKyc('selfie', e.target.files[0])}/></label></div><div className="bg-black/40 p-6 border border-gray-700 text-center relative group hover:border-orange-500 transition-colors"><IdCard size={32} className="mx-auto mb-2 text-gray-500 group-hover:text-orange-500 transition-colors"/><p className="text-xs font-bold mb-2 uppercase tracking-wider">DOCUMENTO ID *</p><label className="btn-secondary-ff py-2 px-6 cursor-pointer block text-xs tracking-widest">{kycData.docFront ? "REEMPLAZAR" : "ESCANEAR DOC"} <input type="file" hidden accept="image/*" onChange={e => handleKyc('docFront', e.target.files[0])}/></label></div></div><div className="input-wrapper"><UserCheck className="w-5 h-5"/><input name="publicUsername" placeholder="Alias Público *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Shield className="w-5 h-5"/><input name="adminName" placeholder="Nombre Admin *" className="input-ff p-4 w-full" onChange={handleChange} /></div><label className="flex items-center gap-3 text-sm text-gray-400 bg-orange-900/10 p-4 border border-orange-500/30 rounded cursor-pointer hover:bg-orange-900/20 transition-colors"><input type="checkbox" onChange={e => setLiveness(e.target.checked)} className="w-5 h-5 accent-orange-500"/> Confirmo que soy una persona real (Prueba de Vida)</label><div className="flex gap-4"><button type="button" onClick={() => setStep(1)} className="flex-1 btn-secondary-ff py-4 font-bold">ATRÁS</button><button disabled={loading} className="flex-[2] btn-ff py-4 text-xl shadow-[0_0_30px_rgba(255,69,0,0.5)] animate-pulse font-bold tracking-widest">{loading ? "ENCRIPTANDO..." : "FINALIZAR REGISTRO"}</button></div></div>)}
       </form>
     </div>
   );
