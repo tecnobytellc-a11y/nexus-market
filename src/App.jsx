@@ -32,7 +32,7 @@ import {
   ScanFace, Upload, KeyRound, Eye, EyeOff, Globe, MapPin,
   CreditCard, Banknote, Receipt, Download, RefreshCw, MessageSquare, Send,
   ImageIcon, CheckSquare, Star, Search, ThumbsUp, ThumbsDown, Minus,
-  Mail, Phone, Smartphone, UserCheck, Key, Shield, IdCard
+  Mail, Phone, Smartphone, UserCheck, Key, Shield
 } from 'lucide-react';
 
 import nexusLogo from './nexus-station-logo.png';
