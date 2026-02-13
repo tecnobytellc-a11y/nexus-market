@@ -31,8 +31,8 @@ import {
   Lock, Zap, Crosshair, Trophy, Diamond, X, Flame, Skull,
   ScanFace, IdCard, Upload, KeyRound, Eye, EyeOff, Globe, MapPin,
   CreditCard, Banknote, Receipt, Download, RefreshCw, MessageSquare, Send,
-  Image as ImageIcon, CheckSquare, Star, Search, ThumbsUp, ThumbsDown, Minus,
-  Mail, Phone, Smartphone, Hash, UserCheck, Key
+  ImageIcon, CheckSquare, Star, Search, ThumbsUp, ThumbsDown, Minus,
+  Mail, Phone, Smartphone, UserCheck, Key
 } from 'lucide-react';
 
 // --- 1. CONFIGURACIÓN FIREBASE REAL ---
@@ -52,11 +52,10 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = "tecnobyte-marketplace-v1"; // Namespace para aislar datos si es necesario
+const appId = "tecnobyte-marketplace-v1"; 
 
 // --- 2. UTILIDADES Y MOTORES ---
 
-// Formateador de Moneda Táctico
 const formatCurrency = (amount, currency = 'USD') => {
   if (currency === 'VES') {
     return new Intl.NumberFormat('es-VE', { style: 'currency', currency: 'VES' }).format(amount);
@@ -64,7 +63,6 @@ const formatCurrency = (amount, currency = 'USD') => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 };
 
-// Radar de Divisas (API CriptoYA)
 const getExchangeRate = async () => {
   try {
     const res = await fetch('https://criptoya.com/api/binance/usdt/ves/0.1');
@@ -76,7 +74,6 @@ const getExchangeRate = async () => {
   }
 };
 
-// Compresor de Imágenes de Alta Velocidad
 const compressImage = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -100,7 +97,6 @@ const compressImage = (file) => {
   });
 };
 
-// Rastreador de IP
 const getIP = async () => {
   try {
     const res = await fetch('https://api.ipify.org?format=json');
@@ -111,7 +107,7 @@ const getIP = async () => {
   }
 };
 
-// --- 3. ESTILOS CSS MASTER (Visual Overdrive) ---
+// --- 3. ESTILOS CSS MASTER (TODAS LAS ANIMACIONES RESTAURADAS) ---
 const Styles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
@@ -121,7 +117,7 @@ const Styles = () => (
       --ff-orange: #FF4500;
       --ff-red: #8B0000;
       --ff-dark: #050505;
-      --ff-panel: rgba(15, 15, 20, 0.85); /* Más transparente para ver el "video" de fondo */
+      --ff-panel: rgba(15, 15, 20, 0.95);
       --ff-cyan: #00FFFF;
     }
 
@@ -141,7 +137,7 @@ const Styles = () => (
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #FF4500; border-radius: 3px; }
 
-    /* ANIMACIÓN DEL LOGO (HYPER EXAGERADA) */
+    /* LOGO HYPER ANIMATION (GLITCH + FLASH + SHAKE) */
     @keyframes logo-shake {
        0%, 100% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg) drop-shadow(0 0 10px cyan); }
        10% { transform: translate(-2px, 2px) scale(1.02); filter: hue-rotate(90deg) drop-shadow(0 0 20px blue); }
@@ -151,7 +147,7 @@ const Styles = () => (
        50% { transform: translate(0, -3px) scale(1.05); opacity: 1; }
     }
     .logo-hyper-anim {
-       animation: logo-shake 5s infinite;
+       animation: logo-shake 3s infinite;
        transition: all 0.2s;
     }
     .logo-hyper-anim:hover {
@@ -182,9 +178,9 @@ const Styles = () => (
       border: 1px solid rgba(255, 69, 0, 0.4);
       position: relative;
       clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
-      backdrop-filter: blur(15px); /* Más blur para efecto vidrio */
-      transition: all 0.3s ease;
+      backdrop-filter: blur(15px);
       box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      transition: all 0.3s;
     }
     .hud-panel:hover { border-color: var(--ff-yellow); box-shadow: 0 0 40px rgba(255, 69, 0, 0.3); transform: translateY(-2px); }
 
@@ -208,88 +204,66 @@ const Styles = () => (
       clip-path: polygon(0 0, 90% 0, 100% 30%, 100% 100%, 10% 100%, 0 70%);
       transition: all 0.2s; cursor: pointer;
     }
-    .btn-secondary-ff:hover { background: rgba(0, 255, 255, 0.1); box-shadow: 0 0 15px var(--ff-cyan); text-shadow: 0 0 5px var(--ff-cyan); }
+    .btn-secondary-ff:hover { background: rgba(0, 255, 255, 0.2); box-shadow: 0 0 20px var(--ff-cyan); text-shadow: 0 0 10px var(--ff-cyan); }
 
-    /* INPUTS MEJORADOS (HUD STYLE) */
-    .input-wrapper {
-       position: relative;
-       transition: all 0.3s;
-    }
-    .input-wrapper svg {
-       position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
-       color: #666; transition: all 0.3s;
-    }
+    /* INPUTS HUD */
+    .input-wrapper { position: relative; transition: all 0.3s; }
+    .input-wrapper svg { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #666; transition: all 0.3s; z-index: 10; }
     .input-wrapper:focus-within svg { color: var(--ff-yellow); filter: drop-shadow(0 0 5px var(--ff-yellow)); }
     
     .input-ff {
-      background: rgba(10, 10, 15, 0.8); 
-      border: 1px solid #333; 
-      border-radius: 4px;
-      color: white; 
-      font-family: 'Rajdhani', sans-serif; 
-      font-weight: 700; 
-      transition: all 0.3s;
-      padding-left: 3rem !important; /* Espacio para el icono */
+      background: rgba(0, 0, 0, 0.8); border: 1px solid #333; border-radius: 4px;
+      color: white; font-family: 'Rajdhani', sans-serif; font-weight: 700; 
+      padding-left: 3rem !important; transition: all 0.3s;
     }
     .input-ff:focus { 
-       border-color: var(--ff-yellow); 
-       outline: none; 
-       background: rgba(20, 20, 30, 0.9); 
-       box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); 
+       border-color: var(--ff-yellow); outline: none; background: rgba(255, 69, 0, 0.1); 
+       box-shadow: 0 0 20px rgba(255, 69, 0, 0.2); 
     }
-    
+
+    /* GLITCH TEXT */
+    .glitch { position: relative; display: inline-block; }
+    .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; }
+    .glitch::before { left: 2px; text-shadow: -2px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim 2s infinite linear alternate-reverse; }
+    .glitch::after { left: -2px; text-shadow: -2px 0 #00fff9; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim2 2s infinite linear alternate-reverse; }
+    @keyframes glitch-anim { 0% { clip: rect(10px, 9999px, 30px, 0); transform: skew(0.8deg); } 100% { clip: rect(50px, 9999px, 90px, 0); transform: skew(0); } }
+    @keyframes glitch-anim2 { 0% { clip: rect(80px, 9999px, 100px, 0); transform: skew(-0.8deg); } 100% { clip: rect(80px, 9999px, 100px, 0); transform: skew(0); } }
+
+    /* FIRE FLAMES */
+    .fire-base { position: fixed; bottom: 0; left: 0; right: 0; height: 250px; background: linear-gradient(to top, rgba(255,69,0,0.5), transparent); filter: blur(5px); z-index: -5; pointer-events: none; }
+    .fire-flame { position: absolute; bottom: -80px; width: 100%; height: 100%; background: url('https://raw.githubusercontent.com/s1mpson/css-fire/master/img/fire.png') repeat-x; background-size: 100% 100%; mix-blend-mode: screen; opacity: 0.9; animation: fireFlicker 3s infinite alternate; }
+    @keyframes fireFlicker { 0%, 100% { transform: scaleY(1); opacity: 0.8; } 50% { transform: scaleY(0.9) skewX(-2deg); opacity: 0.7; } }
+
     /* CHAT BUBBLES */
     .chat-bubble-me { background: rgba(255, 69, 0, 0.2); border: 1px solid var(--ff-orange); border-radius: 12px 12px 0 12px; margin-left: auto; }
     .chat-bubble-other { background: rgba(0, 255, 255, 0.1); border: 1px solid var(--ff-cyan); border-radius: 12px 12px 12px 0; margin-right: auto; }
-    .chat-system { background: rgba(255, 255, 255, 0.1); border-radius: 4px; text-align: center; font-size: 10px; padding: 4px; margin: 4px 0; font-family: monospace; color: #aaa; }
 
-    /* FIRE EFFECT */
-    .fire-base { position: fixed; bottom: 0; left: 0; right: 0; height: 180px; background: linear-gradient(to top, rgba(255,69,0,0.8), transparent); filter: blur(4px); z-index: -10; pointer-events: none; }
-    .fire-flame { position: absolute; bottom: -50px; width: 100%; height: 100%; background: url('https://raw.githubusercontent.com/s1mpson/css-fire/master/img/fire.png') repeat-x; background-size: 100% 100%; mix-blend-mode: screen; opacity: 0.8; animation: fireFlicker 3s infinite alternate; }
-    @keyframes fireFlicker { 0%, 100% { transform: scaleY(1); opacity: 0.8; } 50% { transform: scaleY(0.9) skewX(-2deg); opacity: 0.7; } }
-
-    /* GLITCH EFFECT (TEXTOS) */
-    .glitch { position: relative; display: inline-block; }
-    .glitch::before, .glitch::after {
-      content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a;
-    }
-    .glitch::before { left: 2px; text-shadow: -2px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim 2s infinite linear alternate-reverse; }
-    .glitch::after { left: -2px; text-shadow: -2px 0 #00fff9; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim2 2s infinite linear alternate-reverse; }
-    @keyframes glitch-anim {
-      0% { clip: rect(10px, 9999px, 30px, 0); transform: skew(0.8deg); }
-      100% { clip: rect(50px, 9999px, 90px, 0); transform: skew(0); }
-    }
-    @keyframes glitch-anim2 {
-      0% { clip: rect(80px, 9999px, 100px, 0); transform: skew(-0.8deg); }
-      100% { clip: rect(80px, 9999px, 100px, 0); transform: skew(0); }
-    }
-
-    /* PRINT STYLES */
-    @media print {
-      body * { visibility: hidden; }
-      #invoice-container, #invoice-container * { visibility: visible; }
-      #invoice-container { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; background: white !important; color: black !important; box-shadow: none !important; border: none !important; }
-      .no-print { display: none !important; }
-      .hud-panel { background: white !important; border: 1px solid black !important; clip-path: none !important; }
-      .text-white { color: black !important; }
-      .text-yellow-500 { color: black !important; }
-    }
+    /* PRINT */
+    @media print { body * { visibility: hidden; } #invoice-container, #invoice-container * { visibility: visible; } #invoice-container { position: absolute; left: 0; top: 0; width: 100%; margin: 0; background: white; color: black; } .no-print { display: none; } .hud-panel { background: white; border: 1px solid black; clip-path: none; } }
   `}</style>
+);
+
+const MeteorShower = () => (
+  <div className="fixed inset-0 pointer-events-none z-[-2] overflow-hidden">
+    {[...Array(10)].map((_, i) => (
+      <div key={i} className="meteor" style={{
+        position: 'absolute', width: '100px', height: '2px', background: 'linear-gradient(to left, #ff4500, transparent)',
+        transform: 'rotate(-45deg)', boxShadow: '0 0 20px #ff0000', opacity: 0,
+        top: Math.random() * 50 + '%', left: Math.random() * 100 + '%',
+        animation: `meteor-fall ${Math.random() * 2 + 2}s infinite ${Math.random() * 5}s`
+      }}></div>
+    ))}
+    <style>{`@keyframes meteor-fall { 0% { transform: translateX(300px) translateY(-300px); opacity: 1; } 70% { opacity: 1; } 100% { transform: translateX(-500px) translateY(500px); opacity: 0; } }`}</style>
+  </div>
 );
 
 const AshRain = () => (
   <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-    <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-orange-900/40 via-red-900/10 to-transparent"></div>
     {[...Array(250)].map((_, i) => (
-      <div key={i} className="ember absolute rounded-full bg-orange-500" style={{
-        width: Math.random()*3+2+'px', 
-        height: Math.random()*3+2+'px', 
-        left: Math.random()*100+'%', 
-        bottom: '-20px',
-        animation: `emberRise ${Math.random()*3+2}s linear infinite`,
-        animationDelay: Math.random()*2+'s', 
-        opacity: Math.random()*0.8+0.4,
-        boxShadow: '0 0 8px #FF4500'
+      <div key={i} className="ember" style={{
+        position: 'absolute', width: Math.random()*3+1+'px', height: Math.random()*3+1+'px', 
+        left: Math.random()*100+'%', bottom: '-20px', background: '#FF4500', borderRadius: '50%', boxShadow: '0 0 10px #FF4500',
+        animation: `emberRise ${Math.random()*4+2}s linear infinite`, animationDelay: Math.random()*5+'s', opacity: Math.random()*0.9+0.1
       }}></div>
     ))}
     <style>{`@keyframes emberRise { 0% { transform: translateY(100vh) scale(1); opacity: 1; } 100% { transform: translateY(-100vh) translateX(${Math.random()*100-50}px) scale(0.5); opacity: 0; } }`}</style>
@@ -297,7 +271,7 @@ const AshRain = () => (
 );
 
 const CharacterDecor = () => (
-  <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden max-w-[1920px] mx-auto">
+  <div className="fixed inset-0 pointer-events-none z-[-3] overflow-hidden max-w-[1920px] mx-auto">
     <img src="https://freepngimg.com/thumb/free_fire/165975-fire-character-free-download-png-hd.png" className="absolute bottom-0 left-[-50px] md:left-0 h-[40vh] md:h-[70vh] opacity-40 object-cover mix-blend-screen drop-shadow-[0_0_30px_rgba(255,140,0,0.6)]" style={{ animation: 'floatChar 6s ease-in-out infinite' }} />
     <img src="https://freepngimg.com/thumb/free_fire/165977-fire-character-free-download-png-hq.png" className="absolute bottom-0 right-[-50px] md:right-0 h-[45vh] md:h-[75vh] opacity-40 object-cover mix-blend-screen drop-shadow-[0_0_30px_rgba(255,69,0,0.6)]" style={{ animation: 'floatChar 7s ease-in-out infinite reverse' }} />
   </div>
@@ -307,15 +281,20 @@ const FireEffect = () => (
   <div className="fixed bottom-0 left-0 w-full h-screen pointer-events-none z-[-5] overflow-hidden">
     <div className="fire-base"></div>
     <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-orange-600/40 to-transparent blur-xl animate-pulse"></div>
+    <div className="fire-flame"></div>
   </div>
 );
 
 const CyberVideoBackground = () => (
-  <div className="fixed inset-0 pointer-events-none z-[-10] overflow-hidden">
-     {/* Grid de "Piso" en movimiento */}
-     <div className="cyber-grid"></div>
-     {/* Niebla Digital */}
-     <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a] opacity-80"></div>
+  <div className="fixed inset-0 pointer-events-none z-[-10] overflow-hidden bg-black">
+     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+     <div className="cyber-grid" style={{
+        position: 'absolute', width: '200%', height: '200%', left: '-50%', top: '-50%',
+        backgroundImage: 'linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px)',
+        backgroundSize: '100px 100px', transform: 'perspective(500px) rotateX(60deg)', animation: 'grid-move 5s linear infinite'
+     }}></div>
+     <style>{`@keyframes grid-move { 0% { transform: perspective(500px) rotateX(60deg) translateY(0); } 100% { transform: perspective(500px) rotateX(60deg) translateY(100px); } }`}</style>
+     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-red-900/20"></div>
   </div>
 );
 
@@ -397,7 +376,6 @@ const ChatSystem = ({ orderId, currentUserRole, currentUserId, orderStatus, onUp
                   {msg.text}
                 </div>
               )}
-              {msg.type !== 'system' && <span className="text-[9px] text-gray-500 mt-1 uppercase">{msg.role}</span>}
             </div>
           );
         })}
@@ -476,7 +454,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
   if (!profile) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] bg-black/95 flex items-center justify-center p-4 overflow-auto">
+    <div className="fixed inset-0 z-[80] bg-black/95 flex items-center justify-center p-4 overflow-auto backdrop-blur-sm">
        <div className="hud-panel p-8 max-w-5xl w-full relative animate-enter max-h-[90vh] overflow-y-auto">
           <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-red-500 z-50"><X size={32}/></button>
           <div className="hud-corner-decoration"></div>
@@ -491,6 +469,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
                    
                    <div className="flex items-center gap-2 justify-center flex-wrap">
                       <h2 className="text-3xl font-gamer text-white uppercase glitch" data-text={profile.publicUsername}>{profile.publicUsername}</h2>
+                      
                       {/* BADGE DE 1000 VENTAS */}
                       {salesCount >= 1000 && (
                          <div className="relative group">
@@ -504,6 +483,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
                          </div>
                       )}
                    </div>
+
                    <span className="text-cyan-400 font-tech tracking-widest text-sm uppercase flex items-center gap-1 mt-2"><Shield size={14}/> Comandante Verificado</span>
                 </div>
 
@@ -552,7 +532,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
                 </div>
              </div>
 
-             {/* ARSENAL */}
+             {/* COLUMNA DER: ARSENAL DISPONIBLE */}
              <div className="w-full md:w-2/3 border-l border-gray-700 pl-0 md:pl-8">
                 <h3 className="font-tech text-2xl text-white mb-6 uppercase flex items-center gap-2 border-b border-orange-600 pb-2">
                    <Flame className="text-orange-500"/> Arsenal Disponible ({sellerListings.length})
@@ -643,6 +623,7 @@ export default function App() {
       <div className="fixed inset-0 bg-[#0a0a0a] -z-20"></div>
       <CyberVideoBackground />
       <FireEffect />
+      <MeteorShower />
       <AshRain />
       <CharacterDecor />
       <div className="fixed inset-0 pointer-events-none z-50 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
@@ -674,7 +655,7 @@ export default function App() {
   );
 }
 
-// --- 7. MODAL DE COMPRA ---
+// --- 7. MODAL DE COMPRA (ORDEN, FACTURA, CHAT Y CALIFICACION) ---
 const PurchaseModal = ({ item, onClose, showNotification }) => {
   const [step, setStep] = useState(1);
   const [buyerData, setBuyerData] = useState({ firstName: '', lastName: '', idNumber: '', email: '', whatsapp: '', country: '', state: '' });
@@ -824,14 +805,14 @@ const PurchaseModal = ({ item, onClose, showNotification }) => {
           <div className="space-y-6">
             <h3 className="font-tech text-cyan-400 text-sm uppercase tracking-widest mb-4">Fase 1: Identificación del Operador</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div className="input-wrapper"><User className="w-5 h-5" /><input name="firstName" placeholder="Nombres *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
-               <div className="input-wrapper"><User className="w-5 h-5" /><input name="lastName" placeholder="Apellidos *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
-               <div className="input-wrapper"><IdCard className="w-5 h-5" /><input name="idNumber" placeholder="Cédula / ID *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
-               <div className="input-wrapper"><Phone className="w-5 h-5" /><input name="whatsapp" placeholder="Whatsapp Contacto *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
-               <div className="input-wrapper"><Mail className="w-5 h-5" /><input name="email" placeholder="Correo Electrónico *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
+               <div className="input-wrapper"><User className="w-5 h-5"/><input name="firstName" placeholder="Nombres *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
+               <div className="input-wrapper"><User className="w-5 h-5"/><input name="lastName" placeholder="Apellidos *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
+               <div className="input-wrapper"><IdCard className="w-5 h-5"/><input name="idNumber" placeholder="Cédula / ID *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
+               <div className="input-wrapper"><Phone className="w-5 h-5"/><input name="whatsapp" placeholder="Whatsapp Contacto *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
+               <div className="input-wrapper"><Mail className="w-5 h-5"/><input name="email" placeholder="Correo Electrónico *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
                <div className="grid grid-cols-2 gap-4">
-                  <div className="input-wrapper"><Globe className="w-5 h-5" /><input name="country" placeholder="País *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
-                  <div className="input-wrapper"><MapPin className="w-5 h-5" /><input name="state" placeholder="Estado *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
+                  <div className="input-wrapper"><Globe className="w-5 h-5"/><input name="country" placeholder="País *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
+                  <div className="input-wrapper"><MapPin className="w-5 h-5"/><input name="state" placeholder="Estado *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
                </div>
             </div>
             <button onClick={() => {
@@ -861,9 +842,12 @@ const Navbar = ({ user, userData, setView, onLogout }) => (
   <nav className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-orange-600/50 shadow-[0_5px_40px_rgba(255,69,0,0.3)] animate-enter">
     <div className="container mx-auto px-4 h-24 flex justify-between items-center">
       <div className="flex items-center gap-3 cursor-pointer group select-none hover:scale-105 transition-transform" onClick={() => setView('home')}>
-        <div className="relative">
-           {/* LOGO SOLITARIO CON ANIMACIÓN HYPER-GLITCH */}
-           <img src="/nexus-station-logo.png" alt="NEXUS STATION" className="h-16 md:h-20 object-contain logo-hyper-anim z-10 relative" />
+        {/* ELIMINADO EL ESCUDO COMO PEDISTE */}
+        <div className="flex flex-col">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 animate-pulse"></div>
+            <img src="/nexus-station-logo.png" alt="NEXUS STATION" className="h-16 md:h-20 object-contain logo-hyper-anim z-10 relative" />
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -1127,15 +1111,8 @@ const RegisterForm = ({ setView, showNotification }) => {
     <div className="max-w-4xl mx-auto mt-10 hud-panel p-10 animate-enter">
       <h2 className="text-4xl font-gamer text-white mb-8 text-center flex items-center justify-center gap-4"><Shield className="text-orange-500" size={40}/> RECLUTAMIENTO DE ELITE</h2>
       <form onSubmit={handleRegister}>
-        {step === 1 && (<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="input-wrapper"><User className="w-5 h-5"/><input name="firstName" placeholder="Nombre *" className="input-ff p-4 w-full" onChange={handleChange} /></div>
-            <div className="input-wrapper"><User className="w-5 h-5"/><input name="lastName" placeholder="Apellido *" className="input-ff p-4 w-full" onChange={handleChange} /></div>
-            <div className="input-wrapper"><Mail className="w-5 h-5"/><input name="email" placeholder="Email *" className="input-ff p-4 w-full" onChange={handleChange} /></div>
-            <div className="input-wrapper"><Smartphone className="w-5 h-5"/><input name="whatsapp" placeholder="Whatsapp *" className="input-ff p-4 w-full" onChange={handleChange} /></div>
-            <div className="input-wrapper"><IdCard className="w-5 h-5"/><input name="idNumber" placeholder="DNI / Cédula *" className="input-ff p-4 w-full" onChange={handleChange} /></div>
-            <div className="input-wrapper"><FileText className="w-5 h-5"/><input name="rif" placeholder="RIF (Opcional)" className="input-ff p-4 border-green-900/50 w-full" onChange={handleChange} /></div>
-            <div className="md:col-span-2 bg-black/40 p-4 border border-gray-700"><p className="text-xs text-cyan-400 mb-2 font-bold">SEGURIDAD DE ACCESO</p><div className="grid grid-cols-2 gap-4"><div className="input-wrapper"><Key className="w-5 h-5"/><input name="password" type="password" placeholder="Contraseña Maestra *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Key className="w-5 h-5"/><input name="confirmPassword" type="password" placeholder="Repetir Contraseña *" className="input-ff p-4 w-full" onChange={handleChange} /></div></div><div className="flex gap-2 mt-2 text-[10px] text-gray-500 uppercase"><span className={passStrength.length ? "text-green-500" : ""}>8+ Caracteres</span><span className={passStrength.upper ? "text-green-500" : ""}>Mayúscula</span><span className={passStrength.num ? "text-green-500" : ""}>Número</span><span className={passStrength.special ? "text-green-500" : ""}>Símbolo</span></div></div><button type="button" onClick={handleNextStep} className="btn-secondary-ff py-4 md:col-span-2 text-lg font-bold">SIGUIENTE FASE &gt;&gt;</button></div>)}
-        {step === 2 && (<div className="space-y-6"><div className="grid grid-cols-2 gap-4"><div className="bg-black/40 p-6 border border-gray-700 text-center relative group hover:border-orange-500 transition-colors"><ScanFace size={40} className="mx-auto mb-4 text-gray-500 group-hover:text-orange-500 transition-colors"/><p className="text-xs font-bold mb-2 uppercase tracking-wider">SELFIE EN VIVO *</p><label className="btn-secondary-ff py-2 px-6 cursor-pointer block text-xs tracking-widest">{kycData.selfie ? "REEMPLAZAR" : "ACTIVAR CÁMARA"} <input type="file" hidden accept="image/*" capture="user" onChange={e => handleKyc('selfie', e.target.files[0])}/></label></div><div className="bg-black/40 p-6 border border-gray-700 text-center relative group hover:border-orange-500 transition-colors"><IdCard size={40} className="mx-auto mb-4 text-gray-500 group-hover:text-orange-500 transition-colors"/><p className="text-xs font-bold mb-2 uppercase tracking-wider">DOCUMENTO ID *</p><label className="btn-secondary-ff py-2 px-6 cursor-pointer block text-xs tracking-widest">{kycData.docFront ? "REEMPLAZAR" : "ESCANEAR DOC"} <input type="file" hidden accept="image/*" onChange={e => handleKyc('docFront', e.target.files[0])}/></label></div></div><div className="input-wrapper"><UserCheck className="w-5 h-5"/><input name="publicUsername" placeholder="Alias Público *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Shield className="w-5 h-5"/><input name="adminName" placeholder="Nombre Admin *" className="input-ff p-4 w-full" onChange={handleChange} /></div><label className="flex items-center gap-3 text-sm text-gray-400 bg-orange-900/10 p-4 border border-orange-500/30 rounded cursor-pointer hover:bg-orange-900/20 transition-colors"><input type="checkbox" onChange={e => setLiveness(e.target.checked)} className="w-5 h-5 accent-orange-500"/> Confirmo que soy una persona real (Prueba de Vida)</label><div className="flex gap-4"><button type="button" onClick={() => setStep(1)} className="flex-1 btn-secondary-ff py-4 font-bold">ATRÁS</button><button disabled={loading} className="flex-[2] btn-ff py-4 text-xl shadow-[0_0_30px_rgba(255,69,0,0.5)] animate-pulse font-bold tracking-widest">{loading ? "ENCRIPTANDO..." : "FINALIZAR REGISTRO"}</button></div></div>)}
+        {step === 1 && (<div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div className="input-wrapper"><User className="w-5 h-5"/><input name="firstName" placeholder="Nombre *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><User className="w-5 h-5"/><input name="lastName" placeholder="Apellido *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Mail className="w-5 h-5"/><input name="email" placeholder="Email *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Smartphone className="w-5 h-5"/><input name="whatsapp" placeholder="Whatsapp *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><IdCard className="w-5 h-5"/><input name="idNumber" placeholder="DNI / Cédula *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><FileText className="w-5 h-5"/><input name="rif" placeholder="RIF (Opcional)" className="input-ff p-4 border-green-900/50 w-full" onChange={handleChange} /></div><div className="md:col-span-2 bg-black/40 p-4 border border-gray-700"><p className="text-xs text-cyan-400 mb-2 font-bold">SEGURIDAD DE ACCESO</p><div className="grid grid-cols-2 gap-4"><div className="input-wrapper"><Key className="w-5 h-5"/><input name="password" type="password" placeholder="Contraseña Maestra *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Key className="w-5 h-5"/><input name="confirmPassword" type="password" placeholder="Repetir Contraseña *" className="input-ff p-4 w-full" onChange={handleChange} /></div></div><div className="flex gap-2 mt-2 text-[10px] text-gray-500 uppercase"><span className={passStrength.length ? "text-green-500" : ""}>8+ Caracteres</span><span className={passStrength.upper ? "text-green-500" : ""}>Mayúscula</span><span className={passStrength.num ? "text-green-500" : ""}>Número</span><span className={passStrength.special ? "text-green-500" : ""}>Símbolo</span></div></div><button type="button" onClick={handleNextStep} className="btn-secondary-ff py-4 md:col-span-2 text-lg font-bold">SIGUIENTE FASE &gt;&gt;</button></div>)}
+        {step === 2 && (<div className="space-y-6"><div className="grid grid-cols-2 gap-4"><div className="bg-black/40 p-6 border border-gray-700 text-center relative group hover:border-orange-500 transition-colors"><ScanFace size={40} className="mx-auto mb-4 text-gray-500 group-hover:text-orange-500 transition-colors"/><p className="text-xs font-bold mb-2 uppercase tracking-wider">SELFIE EN VIVO *</p><label className="text-xs btn-secondary-ff p-2 cursor-pointer block">{kycData.selfie ? "REEMPLAZAR" : "ACTIVAR CÁMARA"} <input type="file" hidden accept="image/*" capture="user" onChange={e => handleKyc('selfie', e.target.files[0])}/></label></div><div className="bg-black/40 p-6 border border-gray-700 text-center relative group hover:border-orange-500 transition-colors"><IdCard size={40} className="mx-auto mb-4 text-gray-500 group-hover:text-orange-500 transition-colors"/><p className="text-xs font-bold mb-2 uppercase tracking-wider">DOCUMENTO ID *</p><label className="text-xs btn-secondary-ff p-2 cursor-pointer block">{kycData.docFront ? "REEMPLAZAR" : "ESCANEAR DOC"} <input type="file" hidden accept="image/*" onChange={e => handleKyc('docFront', e.target.files[0])}/></label></div></div><div className="input-wrapper"><UserCheck className="w-5 h-5"/><input name="publicUsername" placeholder="Alias Público *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Shield className="w-5 h-5"/><input name="adminName" placeholder="Nombre Admin *" className="input-ff p-4 w-full" onChange={handleChange} /></div><label className="flex items-center gap-3 text-sm text-gray-400 bg-orange-900/10 p-4 border border-orange-500/30 rounded cursor-pointer hover:bg-orange-900/20 transition-colors"><input type="checkbox" onChange={e => setLiveness(e.target.checked)} className="w-5 h-5 accent-orange-500"/> Confirmo que soy una persona real (Prueba de Vida)</label><div className="flex gap-4"><button type="button" onClick={() => setStep(1)} className="flex-1 btn-secondary-ff py-4 font-bold">ATRÁS</button><button disabled={loading} className="flex-[2] btn-ff py-4 text-xl shadow-[0_0_30px_rgba(255,69,0,0.5)] animate-pulse font-bold tracking-widest">{loading ? "ENCRIPTANDO..." : "FINALIZAR REGISTRO"}</button></div></div>)}
       </form>
     </div>
   );
