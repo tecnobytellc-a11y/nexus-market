@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
+// --- RESTAURACIÓN DE IMPORTS DE FIREBASE (CRÍTICO) ---
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  signInAnonymously
 } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -26,16 +28,20 @@ import {
   getDocs
 } from 'firebase/firestore';
 import { 
-  User, ShoppingBag, LogOut, Plus, Edit, Trash2, 
+  Shield, User, ShoppingBag, LogOut, Plus, Edit, Trash2, 
   CheckCircle, AlertTriangle, Gamepad2, Camera, FileText, 
   Lock, Zap, Crosshair, Trophy, Diamond, X, Flame, Skull,
   ScanFace, Upload, KeyRound, Eye, EyeOff, Globe, MapPin,
   CreditCard, Banknote, Receipt, Download, RefreshCw, MessageSquare, Send,
   ImageIcon, CheckSquare, Star, Search, ThumbsUp, ThumbsDown, Minus,
-  Mail, Phone, Smartphone, UserCheck, Key, Shield
+  Mail, Phone, Smartphone, UserCheck, Key
 } from 'lucide-react';
 
+// --- LOGO DE LA ESTACIÓN ---
+// Usamos un placeholder seguro para evitar errores de compilación si falta la imagen.
+// CUANDO SUBAS EL ARCHIVO 'nexus-station-logo.png' A TU CARPETA SRC, DESCOMENTA LA LÍNEA DE ABAJO:
 import nexusLogo from './nexus-station-logo.png';
+const nexusLogo = "https://placehold.co/400x100/000000/00FFFF/png?text=NEXUS+STATION";
 
 // --- 1. CONFIGURACIÓN FIREBASE REAL ---
 const firebaseConfig = {
@@ -279,7 +285,7 @@ const AshRain = () => (
         animation: `emberRise ${Math.random()*4+2}s linear infinite`, animationDelay: Math.random()*5+'s', opacity: Math.random()*0.9+0.1
       }}></div>
     ))}
-    <style>{`@keyframes emberRise { 0% { transform: translateY(100vh) scale(1); opacity: 1; } 100% { transform: translateY(-100vh) translateX(${Math.random()*100-50}px) scale(0.5); opacity: 0; } }`}</style>
+    <style>{`@keyframes emberRise { 0% { transform: translateY(110vh) scale(1); opacity: 1; } 100% { transform: translateY(-100vh) translateX(${Math.random()*100-50}px) scale(0.5); opacity: 0; } }`}</style>
   </div>
 );
 
@@ -473,15 +479,16 @@ const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
           <div className="hud-corner-decoration"></div>
           
           <div className="flex flex-col md:flex-row gap-8">
-             {/* INFO PERFIL */}
+             {/* COLUMNA IZQ: INFO PERFIL */}
              <div className="w-full md:w-1/3">
                 <div className="flex flex-col items-center text-center mb-8">
-                   <div className="w-32 h-32 rounded-full border-4 border-orange-500 overflow-hidden mb-4 bg-black shadow-[0_0_30px_rgba(255,69,0,0.5)]">
+                   <div className="w-32 h-32 rounded-full border-4 border-orange-500 overflow-hidden mb-4 bg-black shadow-[0_0_50px_rgba(255,69,0,0.6)]">
                       {profile.kycData?.selfie ? <img src={profile.kycData.selfie} className="w-full h-full object-cover"/> : <User size={64} className="text-gray-500 m-auto mt-8"/>}
                    </div>
                    
                    <div className="flex items-center gap-2 justify-center flex-wrap">
                       <h2 className="text-3xl font-gamer text-white uppercase glitch" data-text={profile.publicUsername}>{profile.publicUsername}</h2>
+                      
                       {/* BADGE DE 1000 VENTAS */}
                       {salesCount >= 1000 && (
                          <div className="relative group">
@@ -495,6 +502,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy }) => {
                          </div>
                       )}
                    </div>
+
                    <span className="text-cyan-400 font-tech tracking-widest text-sm uppercase flex items-center gap-1 mt-2"><Shield size={14}/> Comandante Verificado</span>
                 </div>
 
@@ -765,7 +773,7 @@ const PurchaseModal = ({ item, onClose, showNotification }) => {
             <div className="hud-corner-decoration"></div>
             <div className="border-b-2 border-orange-600/30 pb-4 mb-6 flex justify-between items-start">
                <div>
-                  <img src="/nexus-station-logo.png" alt="NEXUS" className="h-10 logo-hyper-anim" />
+                  <img src={nexusLogo} alt="NEXUS" className="h-10 logo-hyper-anim" />
                   <p className="text-xs text-cyan-400 tracking-[0.3em] uppercase">MARKETPLACE DE ELITE</p>
                </div>
                <div className="text-right">
@@ -818,7 +826,7 @@ const PurchaseModal = ({ item, onClose, showNotification }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div className="input-wrapper"><User className="w-5 h-5"/><input name="firstName" placeholder="Nombres *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
                <div className="input-wrapper"><User className="w-5 h-5"/><input name="lastName" placeholder="Apellidos *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
-               <div className="input-wrapper"><IdCard className="w-5 h-5"/><input name="idNumber" placeholder="Cédula / ID *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
+               <div className="input-wrapper"><FileText className="w-5 h-5"/><input name="idNumber" placeholder="Cédula / ID *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
                <div className="input-wrapper"><Phone className="w-5 h-5"/><input name="whatsapp" placeholder="Whatsapp Contacto *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
                <div className="input-wrapper"><Mail className="w-5 h-5"/><input name="email" placeholder="Correo Electrónico *" className="input-ff p-3 w-full" onChange={handleBuyerChange} /></div>
                <div className="grid grid-cols-2 gap-4">
@@ -856,7 +864,8 @@ const Navbar = ({ user, userData, setView, onLogout }) => (
         <div className="flex flex-col">
           <div className="relative group">
             <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 animate-pulse"></div>
-            <img src="/nexus-station-logo.png" alt="NEXUS STATION" className="h-16 md:h-20 object-contain logo-hyper-anim z-10 relative" />
+            {/* ESCUDO ELIMINADO - SOLO LOGO */}
+            <img src={nexusLogo} alt="NEXUS STATION" className="h-16 md:h-20 object-contain logo-hyper-anim z-10 relative" />
           </div>
         </div>
       </div>
@@ -1121,7 +1130,7 @@ const RegisterForm = ({ setView, showNotification }) => {
     <div className="max-w-4xl mx-auto mt-10 hud-panel p-10 animate-enter">
       <h2 className="text-4xl font-gamer text-white mb-8 text-center flex items-center justify-center gap-4"><Shield className="text-orange-500" size={40}/> RECLUTAMIENTO DE ELITE</h2>
       <form onSubmit={handleRegister}>
-        {step === 1 && (<div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div className="input-wrapper"><User className="w-5 h-5"/><input name="firstName" placeholder="Nombre *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><User className="w-5 h-5"/><input name="lastName" placeholder="Apellido *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Mail className="w-5 h-5"/><input name="email" placeholder="Email *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Smartphone className="w-5 h-5"/><input name="whatsapp" placeholder="Whatsapp *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><IdCard className="w-5 h-5"/><input name="idNumber" placeholder="DNI / Cédula *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><FileText className="w-5 h-5"/><input name="rif" placeholder="RIF (Opcional)" className="input-ff p-4 border-green-900/50 w-full" onChange={handleChange} /></div><div className="md:col-span-2 bg-black/40 p-4 border border-gray-700"><p className="text-xs text-cyan-400 mb-2 font-bold">SEGURIDAD DE ACCESO</p><div className="grid grid-cols-2 gap-4"><div className="input-wrapper"><Key className="w-5 h-5"/><input name="password" type="password" placeholder="Contraseña Maestra *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Key className="w-5 h-5"/><input name="confirmPassword" type="password" placeholder="Repetir Contraseña *" className="input-ff p-4 w-full" onChange={handleChange} /></div></div><div className="flex gap-2 mt-2 text-[10px] text-gray-500 uppercase"><span className={passStrength.length ? "text-green-500" : ""}>8+ Caracteres</span><span className={passStrength.upper ? "text-green-500" : ""}>Mayúscula</span><span className={passStrength.num ? "text-green-500" : ""}>Número</span><span className={passStrength.special ? "text-green-500" : ""}>Símbolo</span></div></div><button type="button" onClick={handleNextStep} className="btn-secondary-ff py-4 md:col-span-2 text-lg font-bold">SIGUIENTE FASE &gt;&gt;</button></div>)}
+        {step === 1 && (<div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div className="input-wrapper"><User className="w-5 h-5"/><input name="firstName" placeholder="Nombre *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><User className="w-5 h-5"/><input name="lastName" placeholder="Apellido *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Mail className="w-5 h-5"/><input name="email" placeholder="Email *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Smartphone className="w-5 h-5"/><input name="whatsapp" placeholder="Whatsapp *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><FileText className="w-5 h-5"/><input name="idNumber" placeholder="DNI / Cédula *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><FileText className="w-5 h-5"/><input name="rif" placeholder="RIF (Opcional)" className="input-ff p-4 border-green-900/50 w-full" onChange={handleChange} /></div><div className="md:col-span-2 bg-black/40 p-4 border border-gray-700"><p className="text-xs text-cyan-400 mb-2 font-bold">SEGURIDAD DE ACCESO</p><div className="grid grid-cols-2 gap-4"><div className="input-wrapper"><Key className="w-5 h-5"/><input name="password" type="password" placeholder="Contraseña Maestra *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Key className="w-5 h-5"/><input name="confirmPassword" type="password" placeholder="Repetir Contraseña *" className="input-ff p-4 w-full" onChange={handleChange} /></div></div><div className="flex gap-2 mt-2 text-[10px] text-gray-500 uppercase"><span className={passStrength.length ? "text-green-500" : ""}>8+ Caracteres</span><span className={passStrength.upper ? "text-green-500" : ""}>Mayúscula</span><span className={passStrength.num ? "text-green-500" : ""}>Número</span><span className={passStrength.special ? "text-green-500" : ""}>Símbolo</span></div></div><button type="button" onClick={handleNextStep} className="btn-secondary-ff py-4 md:col-span-2 text-lg font-bold">SIGUIENTE FASE &gt;&gt;</button></div>)}
         {step === 2 && (<div className="space-y-6"><div className="grid grid-cols-2 gap-4"><div className="bg-black/40 p-6 border border-gray-700 text-center relative group hover:border-orange-500 transition-colors"><ScanFace size={40} className="mx-auto mb-4 text-gray-500 group-hover:text-orange-500 transition-colors"/><p className="text-xs font-bold mb-2 uppercase tracking-wider">SELFIE EN VIVO *</p><label className="text-xs btn-secondary-ff p-2 cursor-pointer block">{kycData.selfie ? "REEMPLAZAR" : "ACTIVAR CÁMARA"} <input type="file" hidden accept="image/*" capture="user" onChange={e => handleKyc('selfie', e.target.files[0])}/></label></div><div className="bg-black/40 p-6 border border-gray-700 text-center relative group hover:border-orange-500 transition-colors"><FileText size={40} className="mx-auto mb-4 text-gray-500 group-hover:text-orange-500 transition-colors"/><p className="text-xs font-bold mb-2 uppercase tracking-wider">DOCUMENTO ID *</p><label className="text-xs btn-secondary-ff p-2 cursor-pointer block">{kycData.docFront ? "REEMPLAZAR" : "ESCANEAR DOC"} <input type="file" hidden accept="image/*" onChange={e => handleKyc('docFront', e.target.files[0])}/></label></div></div><div className="input-wrapper"><UserCheck className="w-5 h-5"/><input name="publicUsername" placeholder="Alias Público *" className="input-ff p-4 w-full" onChange={handleChange} /></div><div className="input-wrapper"><Shield className="w-5 h-5"/><input name="adminName" placeholder="Nombre Admin *" className="input-ff p-4 w-full" onChange={handleChange} /></div><label className="flex items-center gap-3 text-sm text-gray-400 bg-orange-900/10 p-4 border border-orange-500/30 rounded cursor-pointer hover:bg-orange-900/20 transition-colors"><input type="checkbox" onChange={e => setLiveness(e.target.checked)} className="w-5 h-5 accent-orange-500"/> Confirmo que soy una persona real (Prueba de Vida)</label><div className="flex gap-4"><button type="button" onClick={() => setStep(1)} className="flex-1 btn-secondary-ff py-4 font-bold">ATRÁS</button><button disabled={loading} className="flex-[2] btn-ff py-4 text-xl shadow-[0_0_30px_rgba(255,69,0,0.5)] animate-pulse font-bold tracking-widest">{loading ? "ENCRIPTANDO..." : "FINALIZAR REGISTRO"}</button></div></div>)}
       </form>
     </div>
@@ -1191,8 +1200,8 @@ const Footer = () => (
   <footer className="bg-black pt-16 pb-10 border-t-2 border-red-900/50 mt-24 text-center relative z-20">
     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] opacity-50"></div>
     <div className="flex justify-center items-center gap-3 mb-8 opacity-90 relative z-10">
-      <img src="/nexus-station-logo.png" alt="NEXUS STATION" className="h-24 object-contain logo-hyper-anim" />
+      <img src={nexusLogo} alt="NEXUS STATION" className="h-24 object-contain logo-hyper-anim" />
     </div>
-    <p className="text-gray-500 font-tech text-xs relative z-10">© 2026 NEXUS STATION DESAROLLADO POR TECNOBYTE LLC. TODOS LOS DERECHOS RESERVADOS.</p>
+    <p className="text-gray-500 font-tech text-xs relative z-10">© 2026 NEXUS STATION. TODOS LOS DERECHOS RESERVADOS.</p>
   </footer>
 );
