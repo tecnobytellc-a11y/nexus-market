@@ -41,7 +41,6 @@ import {
 // Usamos un placeholder seguro para evitar errores de compilación si falta la imagen.
 // CUANDO SUBAS EL ARCHIVO 'nexus-station-logo.png' A TU CARPETA SRC, DESCOMENTA LA LÍNEA DE ABAJO:
 import nexusLogo from './nexus-station-logo.png';
-const nexusLogo = "https://placehold.co/400x100/000000/00FFFF/png?text=NEXUS+STATION";
 
 // --- 1. CONFIGURACIÓN FIREBASE REAL ---
 const firebaseConfig = {
