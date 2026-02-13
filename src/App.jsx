@@ -35,6 +35,8 @@ import {
   Mail, Phone, Smartphone, UserCheck, Key, Shield
 } from 'lucide-react';
 
+import nexusLogo from './nexus-station-logo.png';
+
 // --- 1. CONFIGURACIÓN FIREBASE REAL ---
 const firebaseConfig = {
   apiKey: "AIzaSyBgqPltYbC8ZSzLszFA1y6FegfHJn91Ozg",
