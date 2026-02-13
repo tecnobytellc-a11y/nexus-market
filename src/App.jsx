@@ -32,7 +32,7 @@ import {
   ScanFace, Upload, KeyRound, Eye, EyeOff, Globe, MapPin,
   CreditCard, Banknote, Receipt, Download, RefreshCw, MessageSquare, Send,
   ImageIcon, CheckSquare, Star, Search, ThumbsUp, ThumbsDown, Minus,
-  Mail, Phone, Smartphone, UserCheck, Key, Shield
+  Mail, Phone, Smartphone, UserCheck, Key, Shield, IdCard
 } from 'lucide-react';
 
 import nexusLogo from './nexus-station-logo.png';
@@ -267,9 +267,9 @@ const Styles = () => (
 
 const VideoBackground = () => (
   <div className="fixed inset-0 pointer-events-none z-[-15] overflow-hidden bg-black">
-    {/* Video de Partículas de Fuego en Bucle (Alta disponibilidad) */}
-    <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-screen scale-105">
-       <source src="https://cdn.pixabay.com/video/2020/08/21/47743-451554625_large.mp4" type="video/mp4" />
+    {/* Nuevo Video de Fuego en Servidor Súper Estable (Mixkit) */}
+    <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-screen scale-105">
+       <source src="https://assets.mixkit.co/videos/preview/mixkit-fire-flames-burning-in-the-dark-4286-large.mp4" type="video/mp4" />
     </video>
     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-[#1a0000]"></div>
   </div>
@@ -308,9 +308,10 @@ const AshRain = () => (
 
 const CharacterDecor = () => (
   <div className="fixed inset-0 pointer-events-none z-[-3] overflow-hidden max-w-[1920px] mx-auto opacity-70">
-    <img src="https://i.pinimg.com/originals/ce/c4/85/cec485125eaaf9cceaf96ee6bda02e60.png" onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 left-[-100px] md:left-0 h-[45vh] md:h-[80vh] object-contain drop-shadow-[0_0_40px_rgba(255,69,0,0.8)]" style={{ animation: 'floatChar 6s ease-in-out infinite' }} alt="char1"/>
-    <img src="https://i.pinimg.com/originals/db/db/1d/dbdb1d0e82c286dc5eebc3f191b4cb3f.png" onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 right-[-100px] md:right-[-50px] h-[50vh] md:h-[85vh] object-contain drop-shadow-[0_0_40px_rgba(255,215,0,0.8)]" style={{ animation: 'floatChar 7s ease-in-out infinite reverse' }} alt="char2"/>
-    <img src="https://i.pinimg.com/originals/30/1e/cb/301ecbaab8de6cf2a8187ab6705ec9ce.png" onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 left-1/4 h-[30vh] md:h-[50vh] object-contain opacity-30 drop-shadow-[0_0_30px_rgba(255,0,0,0.9)] mix-blend-screen" style={{ animation: 'floatChar 8s ease-in-out infinite 2s' }} alt="char3"/>
+    {/* Nuevas URLs estables de PNGs transparentes de Free Fire */}
+    <img src="https://freelogopng.com/images/all_img/1664285810free-fire-character-png.png" onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 left-[-100px] md:left-0 h-[45vh] md:h-[80vh] object-contain drop-shadow-[0_0_40px_rgba(255,69,0,0.8)]" style={{ animation: 'floatChar 6s ease-in-out infinite' }} alt="char1"/>
+    <img src="https://freelogopng.com/images/all_img/1664286161free-fire-characters-png.png" onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 right-[-100px] md:right-[-50px] h-[50vh] md:h-[85vh] object-contain drop-shadow-[0_0_40px_rgba(255,215,0,0.8)]" style={{ animation: 'floatChar 7s ease-in-out infinite reverse' }} alt="char2"/>
+    <img src="https://images.squarespace-cdn.com/content/v1/5bca53fc809d8e577c271e16/1614050201639-67B715UUSOMDOP0E1K0K/Alok.png?format=1000w" onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 left-1/4 h-[30vh] md:h-[50vh] object-contain opacity-40 drop-shadow-[0_0_30px_rgba(255,0,0,0.9)] mix-blend-screen" style={{ animation: 'floatChar 8s ease-in-out infinite 2s' }} alt="char3"/>
   </div>
 );
 
@@ -676,7 +677,7 @@ export default function App() {
   );
 }
 
-// --- 7. MODAL DE COMPRA (INTACTO CON EL LOGO LOCAL) ---
+// --- 7. MODAL DE COMPRA ---
 const PurchaseModal = ({ item, onClose, showNotification }) => {
   const [step, setStep] = useState(1);
   const [buyerData, setBuyerData] = useState({ firstName: '', lastName: '', idNumber: '', email: '', whatsapp: '', country: '', state: '' });
@@ -774,8 +775,8 @@ const PurchaseModal = ({ item, onClose, showNotification }) => {
           <div className="hud-panel p-8 font-mono relative animate-enter text-gray-200 border-2 border-orange-500 overflow-y-auto shadow-[0_0_50px_rgba(255,69,0,0.5)]">
             <div className="border-b-2 border-orange-600 pb-6 mb-8 flex justify-between items-start">
                <div>
-                  {/* LOGO LOCAL RESTAURADO */}
-                  <img src="/nexus-station-logo.png" alt="NEXUS" className="h-16 logo-hyper-anim drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
+                  {/* LOGO SOLUCIONADO (Usando variable {nexusLogo}) */}
+                  <img src={nexusLogo} alt="NEXUS" className="h-16 logo-hyper-anim drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
                   <p className="text-sm text-cyan-400 tracking-[0.4em] uppercase font-tech mt-2 font-bold">MARKETPLACE DE ELITE</p>
                </div>
                <div className="text-right">
@@ -876,22 +877,22 @@ const PurchaseModal = ({ item, onClose, showNotification }) => {
   );
 };
 
-// --- Navbar (Header) (CON LOGO LOCAL RESTAURADO) ---
+// --- Navbar (Header) ---
 const Navbar = ({ user, userData, setView, onLogout }) => (
   <nav className="sticky top-0 z-[60] bg-black/80 backdrop-blur-xl border-b-2 border-orange-600/50 shadow-[0_10px_50px_rgba(255,69,0,0.4)] animate-enter">
     <div className="container mx-auto px-4 h-24 flex justify-between items-center">
       <div className="flex items-center gap-3 cursor-pointer group select-none transition-transform duration-500 hover:scale-[1.02]" onClick={() => setView('home')}>
         <div className="flex flex-col relative">
           <div className="absolute -inset-4 bg-orange-600 blur-2xl opacity-20 group-hover:opacity-60 transition-opacity duration-500 animate-pulse rounded-full"></div>
-          {/* LOGO LOCAL RESTAURADO */}
-          <img src="/nexus-station-logo.png" alt="NEXUS STATION" className="h-16 md:h-20 object-contain logo-hyper-anim z-10 relative drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
+          {/* LOGO SOLUCIONADO (Usando variable {nexusLogo}) */}
+          <img src={nexusLogo} alt="NEXUS STATION" className="h-16 md:h-20 object-contain logo-hyper-anim z-10 relative drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
         </div>
       </div>
       <div className="flex items-center gap-4 relative z-10">
         {!user ? (
           <>
             <button onClick={() => setView('login')} className="hidden md:flex items-center gap-2 text-cyan-400 hover:text-white font-tech text-sm uppercase tracking-widest transition-colors bg-cyan-900/20 px-4 py-2 rounded border border-cyan-800 hover:border-cyan-400 shadow-[0_0_15px_rgba(0,255,255,0.1)] hover:shadow-[0_0_20px_rgba(0,255,255,0.4)]"><Lock size={16} /> Acceso Admin</button>
-            <button onClick={() => setView('register')} className="btn-ff px-8 py-3 text-lg font-bold flex items-center gap-2 shadow-[0_0_30px_rgba(255,69,0,0.6)] tracking-widest"><User size={20} /> UNIRSE</button>
+            <button onClick={() => setView('register')} className="btn-ff px-8 py-3 text-lg font-bold flex items-center gap-2 shadow-[0_0_30px_rgba(255,69,0,0.6)] tracking-widest"><User size={20} /> REGISTRO ADMIN</button>
           </>
         ) : (
           <div className="flex items-center gap-6 bg-gradient-to-r from-gray-900 to-black px-6 py-3 rounded-lg border-2 border-orange-900/50 shadow-[0_0_30px_rgba(255,69,0,0.3)] hover:border-orange-500 transition-colors">
@@ -926,7 +927,7 @@ const Marketplace = ({ listings, setPurchaseItem, setView, user, setViewSellerId
         
         {/* Personaje decorativo en el Hero */}
         <div className="absolute right-[-10%] bottom-0 h-[120%] pointer-events-none opacity-80 group-hover:scale-105 transition-transform duration-700 z-0">
-           <img src="https://i.pinimg.com/originals/a4/8e/3c/a48e3c4a22216447e170c2a688b58406.png" onError={(e)=>e.target.style.display='none'} alt="hero character" className="h-full object-contain drop-shadow-[0_0_50px_rgba(255,69,0,0.8)]" />
+           <img src="https://images.squarespace-cdn.com/content/v1/5bca53fc809d8e577c271e16/1614050201639-67B715UUSOMDOP0E1K0K/Alok.png?format=1000w" onError={(e)=>e.target.style.display='none'} alt="hero character" className="h-full object-contain drop-shadow-[0_0_50px_rgba(255,69,0,0.8)]" />
         </div>
 
         <div className="relative z-10 p-12 md:p-24 flex flex-col items-start max-w-4xl">
@@ -1118,18 +1119,52 @@ const Dashboard = ({ user, userData, listings, setView, showNotification }) => {
   );
 };
 
+// --- LÓGICA DE LOGIN Y RECUPERACIÓN MEJORADA ---
 const LoginForm = ({ setView, showNotification }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showRecover, setShowRecover] = useState(false);
-  const handleSubmit = async (e) => { e.preventDefault(); try { await signInWithEmailAndPassword(auth, email, password); setView('dashboard'); showNotification("CREDENCIALES ACEPTADAS."); } catch (error) { showNotification(error.message, "error"); } };
-  const handleRecover = async (e) => { e.preventDefault(); if(!email) return showNotification("INGRESE SU CORREO", "error"); try { await sendPasswordResetEmail(auth, email); showNotification("ENLACE ENVIADO AL CORREO", "success"); setShowRecover(false); } catch (error) { showNotification(error.message, "error"); } };
+  
+  const handleSubmit = async (e) => { 
+     e.preventDefault(); 
+     try { 
+        await signInWithEmailAndPassword(auth, email, password); 
+        setView('dashboard'); 
+        showNotification("CREDENCIALES ACEPTADAS.", "success"); 
+     } catch (error) { 
+        // Lógica de validación de errores de Firebase
+        let mensaje = "Error de autenticación.";
+        if (error.code === 'auth/user-not-found') mensaje = "Este correo NO EXISTE en nuestra base de datos.";
+        else if (error.code === 'auth/wrong-password') mensaje = "Contraseña INCORRECTA.";
+        else if (error.code === 'auth/invalid-credential') mensaje = "Correo no registrado o contraseña incorrecta.";
+        else if (error.code === 'auth/invalid-email') mensaje = "El formato del correo es inválido.";
+        else if (error.code === 'auth/too-many-requests') mensaje = "Demasiados intentos fallidos. Cuenta bloqueada temporalmente.";
+        
+        showNotification(mensaje, "error"); 
+     } 
+  };
+  
+  const handleRecover = async (e) => { 
+     e.preventDefault(); 
+     if(!email) return showNotification("INGRESE SU CORREO", "error"); 
+     try { 
+        await sendPasswordResetEmail(auth, email); 
+        showNotification("ENLACE ENVIADO AL CORREO", "success"); 
+        setShowRecover(false); 
+     } catch (error) { 
+        let mensaje = "Error al intentar recuperar.";
+        if (error.code === 'auth/user-not-found') mensaje = "Este correo NO EXISTE en nuestra base de datos.";
+        else if (error.code === 'auth/invalid-email') mensaje = "El formato del correo es inválido.";
+        
+        showNotification(mensaje, "error"); 
+     } 
+  };
 
   return (
     <div className="max-w-md mx-auto mt-20 relative animate-enter">
       {/* Decoración flotante extrema para el login */}
       <div className="absolute -left-64 top-[-50px] hidden xl:block animate-floatExtreme pointer-events-none z-[-1]">
-         <img src="https://i.pinimg.com/originals/db/db/1d/dbdb1d0e82c286dc5eebc3f191b4cb3f.png" onError={(e)=>e.target.style.display='none'} alt="decor" className="h-[500px] opacity-70 drop-shadow-[0_0_50px_rgba(255,69,0,0.8)] mix-blend-screen" />
+         <img src="https://freelogopng.com/images/all_img/1664286161free-fire-characters-png.png" onError={(e)=>e.target.style.display='none'} alt="decor" className="h-[500px] opacity-70 drop-shadow-[0_0_50px_rgba(255,69,0,0.8)] mix-blend-screen" />
       </div>
 
       <div className="absolute -inset-2 bg-gradient-to-r from-orange-600 via-yellow-500 to-red-600 rounded-xl blur-xl opacity-60 animate-pulse"></div>
@@ -1207,7 +1242,7 @@ const RegisterForm = ({ setView, showNotification }) => {
       
       {/* Decoración lateral en Registro */}
       <div className="absolute -right-64 top-0 hidden xl:block animate-floatExtreme pointer-events-none z-[-1]" style={{ animationDirection: 'reverse' }}>
-         <img src="https://i.pinimg.com/originals/ce/c4/85/cec485125eaaf9cceaf96ee6bda02e60.png" onError={(e)=>e.target.style.display='none'} alt="decor right" className="h-[600px] opacity-60 drop-shadow-[0_0_50px_rgba(255,69,0,0.8)]" />
+         <img src="https://freelogopng.com/images/all_img/1664285810free-fire-character-png.png" onError={(e)=>e.target.style.display='none'} alt="decor right" className="h-[600px] opacity-60 drop-shadow-[0_0_50px_rgba(255,69,0,0.8)]" />
       </div>
 
       <div className="hud-panel p-10 md:p-14 shadow-[0_0_100px_rgba(255,69,0,0.3)] border-2 border-orange-500 bg-black/95">
@@ -1326,7 +1361,7 @@ const ListingForm = ({ user, userData, setView, showNotification, mode = 'create
        <form onSubmit={handleSave} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <div className="md:col-span-2">
-                <label className="block text-cyan-400 font-bold mb-2 uppercase tracking-widest text-sm">Título del Suministro</label>
+               <label className="block text-cyan-400 font-bold mb-2 uppercase tracking-widest text-sm">Título del Suministro</label>
                 <input placeholder="Ej: Cuenta Sakura Veterana Pase 1" className="input-ff w-full p-5 text-2xl" value={data.title} onChange={e => setData({...data, title: e.target.value})} required />
              </div>
              <div>
@@ -1376,8 +1411,8 @@ const Footer = () => (
     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent shadow-[0_0_20px_orange]"></div>
     
     <div className="flex flex-col items-center justify-center gap-6 mb-10 opacity-90 relative z-10">
-      {/* LOGO LOCAL RESTAURADO */}
-      <img src="/nexus-station-logo.png" alt="NEXUS STATION" className="h-32 object-contain logo-hyper-anim drop-shadow-[0_0_30px_rgba(255,69,0,0.5)]" />
+      {/* LOGO SOLUCIONADO (Usando variable {nexusLogo}) */}
+      <img src={nexusLogo} alt="NEXUS STATION" className="h-32 object-contain logo-hyper-anim drop-shadow-[0_0_30px_rgba(255,69,0,0.5)]" />
       <div className="flex gap-6 mt-4">
          <div className="bg-gray-900/80 p-3 rounded-full border border-gray-700 hover:border-orange-500 transition-colors cursor-pointer text-gray-400 hover:text-orange-500"><Gamepad2 size={24}/></div>
          <div className="bg-gray-900/80 p-3 rounded-full border border-gray-700 hover:border-cyan-500 transition-colors cursor-pointer text-gray-400 hover:text-cyan-500"><Shield size={24}/></div>
@@ -1389,3 +1424,5 @@ const Footer = () => (
     <p className="text-orange-600 font-tech text-xs relative z-10 tracking-[0.2em] font-bold uppercase drop-shadow-md">DESARROLLADO POR TECNOBYTE LLC. TODOS LOS DERECHOS RESERVADOS.</p>
   </footer>
 );
+
+export default App;
