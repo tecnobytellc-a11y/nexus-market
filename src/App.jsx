@@ -37,6 +37,10 @@ import {
 
 import nexusLogo from './nexus-station-logo.png';
 
+// --- SISTEMA DE PROXY PARA EVITAR BLOQUEOS DE IMÁGENES Y VIDEOS ---
+const proxyImg = (url) => `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
+const proxyVid = (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`;
+
 // --- 1. CONFIGURACIÓN FIREBASE REAL (INTACTA) ---
 const firebaseConfig = {
   apiKey: "AIzaSyBgqPltYbC8ZSzLszFA1y6FegfHJn91Ozg",
@@ -168,16 +172,15 @@ const Styles = () => (
 
     /* --- METEORITOS MEJORADOS --- */
     @keyframes meteor-fall {
-      0% { transform: translateX(50vw) translateY(-50vh) scale(1); opacity: 1; }
-      100% { transform: translateX(-50vw) translateY(100vh) scale(0.2); opacity: 0; }
+      0% { transform: translateX(100vw) translateY(-20vh) scale(1); opacity: 1; }
+      100% { transform: translateX(-50vw) translateY(100vh) scale(0.3); opacity: 0; }
     }
     .meteor {
       position: absolute;
-      width: 150px; height: 3px;
+      width: 200px; height: 4px;
       background: linear-gradient(to left, #fff, #ff4500, transparent);
       transform: rotate(-45deg);
-      box-shadow: 0 0 30px 5px #ff0000;
-      opacity: 0;
+      box-shadow: 0 0 40px 8px #ff0000;
       border-radius: 50%;
     }
 
@@ -255,7 +258,7 @@ const Styles = () => (
     .glitch::after { left: -3px; text-shadow: -2px 0 #00fff9; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim2 3s infinite linear alternate-reverse; }
     
     /* FIRE FLAMES */
-    .fire-base { position: fixed; bottom: 0; left: 0; right: 0; height: 35vh; background: linear-gradient(to top, rgba(255,69,0,0.8), rgba(255,0,0,0.2), transparent); filter: blur(8px); z-index: -5; pointer-events: none; }
+    .fire-base { position: fixed; bottom: 0; left: 0; right: 0; height: 35vh; background: linear-gradient(to top, rgba(255,69,0,0.8), rgba(255,0,0,0.2), transparent); filter: blur(8px); pointer-events: none; }
     .fire-flame { position: absolute; bottom: -100px; width: 100%; height: 120%; background: url('https://raw.githubusercontent.com/s1mpson/css-fire/master/img/fire.png') repeat-x; background-size: auto 100%; mix-blend-mode: color-dodge; opacity: 0.9; animation: fireFlicker 2s infinite alternate ease-in-out; }
     @keyframes fireFlicker { 0% { transform: scaleY(1) translateY(0); opacity: 0.9; } 50% { transform: scaleY(1.1) skewX(-3deg) translateY(-10px); opacity: 1; } 100% { transform: scaleY(0.9) skewX(3deg) translateY(5px); opacity: 0.8; } }
 
@@ -266,25 +269,26 @@ const Styles = () => (
 );
 
 const VideoBackground = () => (
-  <div className="fixed inset-0 pointer-events-none z-[-15] overflow-hidden bg-black">
-    {/* Nuevo Video de Fuego en Servidor Súper Estable (Mixkit) */}
-    <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-screen scale-105">
-       <source src="https://assets.mixkit.co/videos/preview/mixkit-fire-flames-burning-in-the-dark-4286-large.mp4" type="video/mp4" />
+  <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden bg-black mix-blend-screen">
+    {/* Video protegido con Proxy CORS para evitar bloqueos */}
+    <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-30 scale-105">
+       <source src={proxyVid('https://assets.mixkit.co/videos/preview/mixkit-fire-flames-burning-in-the-dark-4286-large.mp4')} type="video/mp4" />
     </video>
     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-[#1a0000]"></div>
   </div>
 );
 
 const LightningStorm = () => (
-  <div className="fixed inset-0 pointer-events-none z-[-12] bg-white opacity-0 mix-blend-overlay" style={{ animation: 'lightningFlash 15s infinite' }}></div>
+  <div className="fixed inset-0 pointer-events-none z-[2] bg-white opacity-0 mix-blend-overlay" style={{ animation: 'lightningFlash 15s infinite' }}></div>
 );
 
 const MeteorShower = () => (
-  <div className="fixed inset-0 pointer-events-none z-[-2] overflow-hidden">
+  <div className="fixed inset-0 pointer-events-none z-[3] overflow-hidden">
     {[...Array(30)].map((_, i) => (
       <div key={i} className="meteor" style={{
-        top: Math.random() * 80 - 20 + '%', left: Math.random() * 150 + '%',
-        animation: `meteor-fall ${Math.random() * 1.5 + 1}s infinite ${Math.random() * 5}s`,
+        top: Math.random() * 100 - 50 + '%', 
+        left: Math.random() * 150 + '%',
+        animation: `meteor-fall ${Math.random() * 2 + 1.5}s linear infinite ${Math.random() * 5}s`,
         background: Math.random() > 0.8 ? 'linear-gradient(to left, #00ffff, #0000ff, transparent)' : 'linear-gradient(to left, #fff, #ff4500, transparent)'
       }}></div>
     ))}
@@ -292,7 +296,7 @@ const MeteorShower = () => (
 );
 
 const AshRain = () => (
-  <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+  <div className="fixed inset-0 pointer-events-none z-[4] overflow-hidden">
     {[...Array(400)].map((_, i) => {
       const size = Math.random() * 4 + 2;
       return (
@@ -307,16 +311,16 @@ const AshRain = () => (
 );
 
 const CharacterDecor = () => (
-  <div className="fixed inset-0 pointer-events-none z-[-3] overflow-hidden max-w-[1920px] mx-auto opacity-70">
-    {/* Nuevas URLs estables de PNGs transparentes de Free Fire */}
-    <img src="https://freelogopng.com/images/all_img/1664285810free-fire-character-png.png" onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 left-[-100px] md:left-0 h-[45vh] md:h-[80vh] object-contain drop-shadow-[0_0_40px_rgba(255,69,0,0.8)]" style={{ animation: 'floatChar 6s ease-in-out infinite' }} alt="char1"/>
-    <img src="https://freelogopng.com/images/all_img/1664286161free-fire-characters-png.png" onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 right-[-100px] md:right-[-50px] h-[50vh] md:h-[85vh] object-contain drop-shadow-[0_0_40px_rgba(255,215,0,0.8)]" style={{ animation: 'floatChar 7s ease-in-out infinite reverse' }} alt="char2"/>
-    <img src="https://images.squarespace-cdn.com/content/v1/5bca53fc809d8e577c271e16/1614050201639-67B715UUSOMDOP0E1K0K/Alok.png?format=1000w" onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 left-1/4 h-[30vh] md:h-[50vh] object-contain opacity-40 drop-shadow-[0_0_30px_rgba(255,0,0,0.9)] mix-blend-screen" style={{ animation: 'floatChar 8s ease-in-out infinite 2s' }} alt="char3"/>
+  <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden max-w-[1920px] mx-auto opacity-70">
+    {/* Imágenes procesadas por el Proxy Enmascarador */}
+    <img src={proxyImg('https://freelogopng.com/images/all_img/1664285810free-fire-character-png.png')} onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 left-[-100px] md:left-0 h-[45vh] md:h-[80vh] object-contain drop-shadow-[0_0_40px_rgba(255,69,0,0.8)]" style={{ animation: 'floatChar 6s ease-in-out infinite' }} alt="char1"/>
+    <img src={proxyImg('https://freelogopng.com/images/all_img/1664286161free-fire-characters-png.png')} onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 right-[-100px] md:right-[-50px] h-[50vh] md:h-[85vh] object-contain drop-shadow-[0_0_40px_rgba(255,215,0,0.8)]" style={{ animation: 'floatChar 7s ease-in-out infinite reverse' }} alt="char2"/>
+    <img src={proxyImg('https://images.squarespace-cdn.com/content/v1/5bca53fc809d8e577c271e16/1614050201639-67B715UUSOMDOP0E1K0K/Alok.png?format=1000w')} onError={(e)=>e.target.style.display='none'} className="absolute bottom-0 left-1/4 h-[30vh] md:h-[50vh] object-contain opacity-40 drop-shadow-[0_0_30px_rgba(255,0,0,0.9)] mix-blend-screen" style={{ animation: 'floatChar 8s ease-in-out infinite 2s' }} alt="char3"/>
   </div>
 );
 
 const FireEffect = () => (
-  <div className="fixed bottom-0 left-0 w-full h-screen pointer-events-none z-[-5] overflow-hidden">
+  <div className="fixed bottom-0 left-0 w-full h-screen pointer-events-none z-[6] overflow-hidden">
     <div className="fire-base"></div>
     <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-[#ff2a00]/50 via-[#ff0000]/20 to-transparent blur-2xl animate-pulse"></div>
     <div className="fire-flame"></div>
@@ -630,6 +634,7 @@ export default function App() {
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center text-yellow-500 font-gamer text-3xl relative overflow-hidden">
       <Styles />
+      <div className="fixed inset-0 bg-black z-[-20]"></div>
       <VideoBackground />
       <FireEffect />
       <div className="z-10 flex flex-col items-center p-10 hud-panel animate-pulse">
@@ -642,14 +647,16 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col relative text-gray-100 bg-transparent selection:bg-orange-600 selection:text-white">
       <Styles />
-      {/* CAPAS DE FONDO EXTREMAS */}
+      
+      {/* CAPAS DE FONDO EXTREMAS (ORDENADAS POR Z-INDEX) */}
+      <div className="fixed inset-0 bg-black z-[-20]"></div>
       <VideoBackground />
       <LightningStorm />
       <FireEffect />
       <MeteorShower />
       <AshRain />
       <CharacterDecor />
-      <div className="fixed inset-0 pointer-events-none z-50 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
+      <div className="fixed inset-0 pointer-events-none z-[7] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
 
       <Navbar user={user} userData={userData} setView={setView} onLogout={handleLogout} />
 
@@ -775,7 +782,7 @@ const PurchaseModal = ({ item, onClose, showNotification }) => {
           <div className="hud-panel p-8 font-mono relative animate-enter text-gray-200 border-2 border-orange-500 overflow-y-auto shadow-[0_0_50px_rgba(255,69,0,0.5)]">
             <div className="border-b-2 border-orange-600 pb-6 mb-8 flex justify-between items-start">
                <div>
-                  {/* LOGO SOLUCIONADO (Usando variable {nexusLogo}) */}
+                  {/* LOGO SOLUCIONADO */}
                   <img src={nexusLogo} alt="NEXUS" className="h-16 logo-hyper-anim drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
                   <p className="text-sm text-cyan-400 tracking-[0.4em] uppercase font-tech mt-2 font-bold">MARKETPLACE DE ELITE</p>
                </div>
@@ -884,7 +891,7 @@ const Navbar = ({ user, userData, setView, onLogout }) => (
       <div className="flex items-center gap-3 cursor-pointer group select-none transition-transform duration-500 hover:scale-[1.02]" onClick={() => setView('home')}>
         <div className="flex flex-col relative">
           <div className="absolute -inset-4 bg-orange-600 blur-2xl opacity-20 group-hover:opacity-60 transition-opacity duration-500 animate-pulse rounded-full"></div>
-          {/* LOGO SOLUCIONADO (Usando variable {nexusLogo}) */}
+          {/* LOGO SOLUCIONADO */}
           <img src={nexusLogo} alt="NEXUS STATION" className="h-16 md:h-20 object-contain logo-hyper-anim z-10 relative drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
         </div>
       </div>
@@ -925,9 +932,9 @@ const Marketplace = ({ listings, setPurchaseItem, setView, user, setViewSellerId
         <div className="absolute inset-0 bg-[url('https://wallpaperaccess.com/full/2222718.jpg')] bg-cover bg-center opacity-70 group-hover:scale-110 group-hover:opacity-90 transition-all duration-[5s] ease-out"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent"></div>
         
-        {/* Personaje decorativo en el Hero */}
-        <div className="absolute right-[-10%] bottom-0 h-[120%] pointer-events-none opacity-80 group-hover:scale-105 transition-transform duration-700 z-0">
-           <img src="https://images.squarespace-cdn.com/content/v1/5bca53fc809d8e577c271e16/1614050201639-67B715UUSOMDOP0E1K0K/Alok.png?format=1000w" onError={(e)=>e.target.style.display='none'} alt="hero character" className="h-full object-contain drop-shadow-[0_0_50px_rgba(255,69,0,0.8)]" />
+        {/* Personaje decorativo en el Hero con Proxy */}
+        <div className="absolute right-[-10%] bottom-0 h-[120%] pointer-events-none opacity-80 group-hover:scale-105 transition-transform duration-700 z-[8]">
+           <img src={proxyImg('https://images.squarespace-cdn.com/content/v1/5bca53fc809d8e577c271e16/1614050201639-67B715UUSOMDOP0E1K0K/Alok.png?format=1000w')} onError={(e)=>e.target.style.display='none'} alt="hero character" className="h-full object-contain drop-shadow-[0_0_50px_rgba(255,69,0,0.8)]" />
         </div>
 
         <div className="relative z-10 p-12 md:p-24 flex flex-col items-start max-w-4xl">
@@ -1132,7 +1139,6 @@ const LoginForm = ({ setView, showNotification }) => {
         setView('dashboard'); 
         showNotification("CREDENCIALES ACEPTADAS.", "success"); 
      } catch (error) { 
-        // Lógica de validación de errores de Firebase
         let mensaje = "Error de autenticación.";
         if (error.code === 'auth/user-not-found') mensaje = "Este correo NO EXISTE en nuestra base de datos.";
         else if (error.code === 'auth/wrong-password') mensaje = "Contraseña INCORRECTA.";
@@ -1162,9 +1168,9 @@ const LoginForm = ({ setView, showNotification }) => {
 
   return (
     <div className="max-w-md mx-auto mt-20 relative animate-enter">
-      {/* Decoración flotante extrema para el login */}
-      <div className="absolute -left-64 top-[-50px] hidden xl:block animate-floatExtreme pointer-events-none z-[-1]">
-         <img src="https://freelogopng.com/images/all_img/1664286161free-fire-characters-png.png" onError={(e)=>e.target.style.display='none'} alt="decor" className="h-[500px] opacity-70 drop-shadow-[0_0_50px_rgba(255,69,0,0.8)] mix-blend-screen" />
+      {/* Decoración en Login con Proxy */}
+      <div className="absolute -left-64 top-[-50px] hidden xl:block animate-floatExtreme pointer-events-none z-[8]">
+         <img src={proxyImg('https://freelogopng.com/images/all_img/1664286161free-fire-characters-png.png')} onError={(e)=>e.target.style.display='none'} alt="decor" className="h-[500px] opacity-70 drop-shadow-[0_0_50px_rgba(255,69,0,0.8)] mix-blend-screen" />
       </div>
 
       <div className="absolute -inset-2 bg-gradient-to-r from-orange-600 via-yellow-500 to-red-600 rounded-xl blur-xl opacity-60 animate-pulse"></div>
@@ -1240,9 +1246,9 @@ const RegisterForm = ({ setView, showNotification }) => {
   return (
     <div className="max-w-5xl mx-auto mt-16 relative animate-enter">
       
-      {/* Decoración lateral en Registro */}
-      <div className="absolute -right-64 top-0 hidden xl:block animate-floatExtreme pointer-events-none z-[-1]" style={{ animationDirection: 'reverse' }}>
-         <img src="https://freelogopng.com/images/all_img/1664285810free-fire-character-png.png" onError={(e)=>e.target.style.display='none'} alt="decor right" className="h-[600px] opacity-60 drop-shadow-[0_0_50px_rgba(255,69,0,0.8)]" />
+      {/* Decoración lateral en Registro con Proxy */}
+      <div className="absolute -right-64 top-0 hidden xl:block animate-floatExtreme pointer-events-none z-[8]" style={{ animationDirection: 'reverse' }}>
+         <img src={proxyImg('https://freelogopng.com/images/all_img/1664285810free-fire-character-png.png')} onError={(e)=>e.target.style.display='none'} alt="decor right" className="h-[600px] opacity-60 drop-shadow-[0_0_50px_rgba(255,69,0,0.8)]" />
       </div>
 
       <div className="hud-panel p-10 md:p-14 shadow-[0_0_100px_rgba(255,69,0,0.3)] border-2 border-orange-500 bg-black/95">
@@ -1254,7 +1260,8 @@ const RegisterForm = ({ setView, showNotification }) => {
               <div className="input-wrapper"><User className="w-6 h-6"/><input name="lastName" placeholder="Apellido *" className="input-ff p-5 w-full text-lg" onChange={handleChange} /></div>
               <div className="input-wrapper"><Mail className="w-6 h-6"/><input name="email" placeholder="Email *" className="input-ff p-5 w-full text-lg" onChange={handleChange} /></div>
               <div className="input-wrapper"><Smartphone className="w-6 h-6"/><input name="whatsapp" placeholder="Whatsapp *" className="input-ff p-5 w-full text-lg" onChange={handleChange} /></div>
-              <div className="input-wrapper"><IdCard className="w-6 h-6"/><input name="idNumber" placeholder="DNI / Cédula *" className="input-ff p-5 w-full text-lg" onChange={handleChange} /></div>
+              {/* Aquí estaba el error. Cambiado a CreditCard para que no colapse */}
+              <div className="input-wrapper"><CreditCard className="w-6 h-6"/><input name="idNumber" placeholder="DNI / Cédula *" className="input-ff p-5 w-full text-lg" onChange={handleChange} /></div>
               <div className="input-wrapper"><FileText className="w-6 h-6"/><input name="rif" placeholder="RIF (Opcional)" className="input-ff p-5 border-green-900/50 focus:border-green-500 w-full text-lg" onChange={handleChange} /></div>
               
               <div className="md:col-span-2 bg-gradient-to-r from-gray-900 to-black p-8 border-2 border-gray-800 rounded mt-4 shadow-inner">
