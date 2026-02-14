@@ -1467,4 +1467,3 @@ export default function App() {
       <Footer setView={setView} />
     </div>
   );
-}
