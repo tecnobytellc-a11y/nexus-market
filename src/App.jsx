@@ -32,7 +32,7 @@ import {
   ScanFace, Upload, Eye, EyeOff, Globe, MapPin,
   CreditCard, Banknote, Receipt, Download, RefreshCw, MessageSquare, Send,
   ImageIcon, CheckSquare, Star, Search, ThumbsUp, ThumbsDown, Minus,
-  Mail, Phone, Smartphone, UserCheck, Key, Shield, Headset, Users,
+  Mail, Phone, Smartphone, UserCheck, Key, Shield, Headphones, Users,
   Facebook, Instagram, MessageCircle, Radar, Activity, PauseCircle, PlayCircle, 
   Gavel, Heart, Bell, Volume2, VolumeX, ShieldAlert, Award, Package, Ban, FileWarning,
   ShieldCheck
@@ -499,7 +499,7 @@ const ChatSystem = ({ orderId, currentUserRole, currentUserId, orderStatus, onUp
             </button>
             {orderData?.supportRequested && (
               <span className="text-purple-400 font-bold text-xs flex items-center gap-1 bg-purple-900/40 px-2 py-1 rounded border border-purple-500">
-                <Headset size={14} className="animate-pulse"/> SOPORTE ACTIVO
+                <Headphones size={14} className="animate-pulse"/> SOPORTE ACTIVO
               </span>
             )}
             <span className={`text-[10px] px-3 py-1.5 rounded-full font-bold uppercase shadow-[0_0_15px_currentColor] ${orderStatus === 'completed' ? 'bg-green-500 text-black' : orderStatus === 'cancelled' ? 'bg-red-600 text-white' : 'bg-yellow-500 text-black'}`}>
@@ -611,7 +611,7 @@ const ChatSystem = ({ orderId, currentUserRole, currentUserId, orderStatus, onUp
            
            {(orderStatus === 'created' || orderStatus === 'payment_reported' || orderStatus === 'payment_confirmed') && currentUserRole !== 'SOPORTE' && !orderData?.supportRequested && (
              <button onClick={requestSupport} className="w-full mt-2 py-2 text-xs font-bold uppercase text-purple-400 hover:text-white border border-purple-900 hover:border-purple-500 bg-purple-900/20 hover:bg-purple-600 transition-colors flex items-center justify-center gap-2 rounded">
-               <Headset size={16}/> ALERTA: LLAMAR SOPORTE
+               <Headphones size={16}/> ALERTA: LLAMAR SOPORTE
              </button>
            )}
            
@@ -703,7 +703,7 @@ const SupportDashboard = ({ user, userData, setView, showNotification, isMuted }
         <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-transparent pointer-events-none"></div>
         <div className="relative z-10 text-center md:text-left">
           <h2 className="text-5xl font-gamer text-white uppercase italic text-shadow-glow drop-shadow-[0_0_20px_purple] mb-2 flex items-center justify-center md:justify-start gap-4">
-            <Headset size={48} className="text-purple-500 animate-pulse"/> CENTRAL DE SOPORTE
+            <Headphones size={48} className="text-purple-500 animate-pulse"/> CENTRAL DE SOPORTE
           </h2>
           <p className="font-tech text-cyan-400 tracking-[0.4em] text-xl uppercase font-bold bg-cyan-900/30 inline-block px-4 py-1 border border-cyan-500/50">
             <Shield className="inline mr-2 mb-1" size={18}/> Nivel Cero: Acceso Autorizado
