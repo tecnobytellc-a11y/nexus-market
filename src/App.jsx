@@ -394,23 +394,43 @@ const ChatSystem = ({ orderId, currentUserRole, currentUserId, orderStatus, onUp
     ? ["¡Hola! Ya realicé el pago.", "¿Estás ahí?", "Revisando cuenta...", "Todo excelente, gracias."] 
     : ["Agente en línea, ¿en qué ayudo?", "Por favor, mantengan el respeto.", "Revisando el caso..."];
 
+  // MANEJO SEGURO DE NOTIFICACIONES PUSH
   useEffect(() => {
-    if (!orderId) return;
-    const q = query(
-      collection(db, 'artifacts', appId, 'public', 'data', 'orders', orderId, 'messages'), 
-      orderBy('createdAt', 'asc')
-    );
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-      
-      if(snapshot.docs.length > 0 && snapshot.docs[snapshot.docs.length-1].data().senderId !== currentUserId) {
-        playSound('notif', isMuted);
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission().catch(e => console.warn("Notificaciones bloqueadas", e));
       }
-    });
-    return () => unsubscribe();
-  }, [orderId, currentUserId, isMuted]);
+    }
+  }, []);
+
+  // ESCUCHA DE ÓRDENES Y ALERTAS DE SONIDO
+  useEffect(() => {
+     if(!user) return;
+     let initialLoad = true;
+     const unsub = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('seller.id', '==', user.uid)), (snap) => {
+        if(initialLoad) { 
+          initialLoad = false; 
+          return; 
+        }
+        snap.docChanges().forEach((change) => {
+           const d = change.doc.data();
+           if (change.type === "added") { 
+             playSound('notif', isMuted); 
+             setUnreadAlerts(u=>u+1); 
+             showNotification(`NUEVA VENTA RECIBIDA: #${d.orderId}`, "success"); 
+             if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === "granted") {
+                try { new Notification("NEXUS STATION", { body: `NUEVA VENTA RECIBIDA: #${d.orderId}. Ingresa al Radar.` }); } catch(e){}
+             }
+           }
+           if (change.type === "modified" && d.status === 'payment_reported') { 
+             playSound('notif', isMuted); 
+             setUnreadAlerts(u=>u+1); 
+             showNotification(`PAGO REPORTADO EN #${d.orderId}`, "success"); 
+           }
+        });
+     });
+     return () => unsub();
+  }, [user, isMuted]);
 
   const sendMessage = async (text, type = 'text', imageUrl = null) => {
     if (!text && !imageUrl) return;
@@ -2291,6 +2311,9 @@ export default function App() {
   const [viewSellerId, setViewSellerId] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [unreadAlerts, setUnreadAlerts] = useState(0);
+  const [filterType, setFilterType] = useState('recent');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -2393,7 +2416,7 @@ export default function App() {
           </div>
         )}
 
-        {view === 'home' && <Marketplace listings={listings} setPurchaseItem={setPurchaseItem} setView={setView} user={user} setViewSellerId={setViewSellerId} isMuted={isMuted} showNotification={showNotification} />}
+        {view === 'home' && <Marketplace listings={listings} setPurchaseItem={setPurchaseItem} setView={setView} user={user} setViewSellerId={setViewSellerId} isMuted={isMuted} showNotification={showNotification} filterType={filterType} setFilterType={setFilterType} />}
         {view === 'login' && <LoginForm setView={setView} showNotification={showNotification} isMuted={isMuted}/>}
         {view === 'register' && <RegisterForm setView={setView} showNotification={showNotification} isMuted={isMuted}/>}
         {view === 'dashboard' && <Dashboard user={user} userData={userData} listings={listings} setView={setView} showNotification={showNotification} setViewSellerId={setViewSellerId} isMuted={isMuted}/>}
