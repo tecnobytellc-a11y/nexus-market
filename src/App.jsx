@@ -849,7 +849,6 @@ const ChatSystem = ({ orderId, currentUserRole, currentUserId, orderStatus, onUp
       )}
     </div>
   );
-};
 
 // ============================================================================
 // 8. RASTREADOR DE ÓRDENES (CLIENTE)
