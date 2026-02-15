@@ -1130,6 +1130,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState('arsenal');
   const [avgRating, setAvgRating] = useState(0);
+  const [clientIp, setClientIp] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -1139,14 +1140,14 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
         if (docSnap.exists()) setProfile(docSnap.data());
       } catch (e) { console.error("Error perfil:", e); }
 
-      // 2. Cargar Ventas (Filtrado seguro en JS)
+      // 2. Cargar Ventas
       try {
         const qOrders = query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('seller.id', '==', sellerId));
         const salesSnap = await getDocs(qOrders);
         setSalesCount(salesSnap.docs.filter(d => d.data().status === 'completed').length);
       } catch (e) { console.error("Error órdenes:", e); }
 
-      // 3. Cargar Arsenal (Filtrado seguro en JS para evitar bloqueo de Firebase)
+      // 3. Cargar Arsenal
       try {
         const qListings = query(collection(db, 'artifacts', appId, 'public', 'data', 'listings'), where('sellerId', '==', sellerId));
         const listingsSnap = await getDocs(qListings);
@@ -1172,50 +1173,75 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
         }
       } catch (e) { console.error("Error reputación:", e); }
 
-      // 5. Cargar Seguidores (Ahora funciona independientemente del Arsenal)
+      // 5. LÓGICA DE SEGUIDORES BASADA EN DIRECCIÓN IP
       try {
+        // Capturamos la IP actual de la casa/dispositivo
+        const currentIp = await getIP();
+        // Firebase no permite puntos en los nombres de documentos, así que los cambiamos por guiones bajos
+        const sanitizedIp = currentIp.replace(/\./g, '_').replace(/:/g, '_'); 
+        setClientIp(sanitizedIp);
+
         const followersSnap = await getDocs(collection(db, 'artifacts', appId, 'users', sellerId, 'followers'));
         setFollowerCount(followersSnap.size);
         
-        if(user) {
-           const myFollow = await getDoc(doc(db, 'artifacts', appId, 'users', sellerId, 'followers', user.uid));
+        if(sanitizedIp) {
+           // Verificamos si esta IP específica ya le dio a seguir
+           const myFollow = await getDoc(doc(db, 'artifacts', appId, 'users', sellerId, 'followers', sanitizedIp));
            setIsFollowing(myFollow.exists());
         }
       } catch (e) { console.error("Error seguidores:", e); }
     };
     
     load();
-  }, [sellerId, user]);
+  }, [sellerId]);
 
+  // 🔥 ACTUALIZACIÓN OPTIMISTA BASADA EN IP
   const toggleFollow = async () => {
      playSound('click', isMuted);
-     if(!user) return showNotification("Debes iniciar sesión para seguir", "error");
-     if(user.uid === sellerId) return showNotification("No puedes seguirte a ti mismo", "error");
      
-     const ref = doc(db, 'artifacts', appId, 'users', sellerId, 'followers', user.uid);
+     // Evitamos que un vendedor logueado se siga a sí mismo
+     if(user && user.uid === sellerId) return showNotification("No puedes seguirte a ti mismo", "error");
      
+     // Si la IP no ha cargado, le pedimos que espere un segundo
+     if(!clientIp) return showNotification("Calculando conexión segura, intenta de nuevo.", "error");
+     
+     const ref = doc(db, 'artifacts', appId, 'users', sellerId, 'followers', clientIp);
+     const wasFollowing = isFollowing;
+
+     // 1. Cambiamos la UI instantáneamente para que NO se sienta congelado
+     setIsFollowing(!wasFollowing);
+     setFollowerCount(prev => wasFollowing ? Math.max(0, prev - 1) : prev + 1);
+
+     // 2. Procesamos la base de datos en segundo plano usando la IP
      try {
-       if(isFollowing) { 
+       if(wasFollowing) { 
          await deleteDoc(ref); 
-         setIsFollowing(false); 
-         setFollowerCount(f => Math.max(0, f - 1)); 
        } else { 
-         await setDoc(ref, { followedAt: serverTimestamp() }); 
-         setIsFollowing(true); 
-         setFollowerCount(f => f + 1); 
+         await setDoc(ref, { followedAt: serverTimestamp(), ipOriginal: clientIp }); 
          showNotification("¡COMANDANTE SEGUIDO!", "success");
        }
      } catch (e) {
-       showNotification("Error de conexión al procesar el servidor", "error");
+       console.error("Error al seguir en Firebase:", e);
+       // 3. Si Firebase falla de fondo, revertimos los colores y números a como estaban.
+       setIsFollowing(wasFollowing);
+       setFollowerCount(prev => wasFollowing ? prev + 1 : Math.max(0, prev - 1));
+       showNotification("Error de conexión al servidor.", "error");
      }
   };
 
   const toggleManualVerify = async () => {
      playSound('click', isMuted);
      const newStatus = !profile.isManuallyVerified;
-     await updateDoc(doc(db, 'artifacts', appId, 'users', sellerId, 'profile', 'data'), { isManuallyVerified: newStatus });
+     
      setProfile({...profile, isManuallyVerified: newStatus});
-     showNotification(newStatus ? "Insignia ÉLITE Otorgada" : "Insignia ÉLITE Retirada", "success");
+     
+     try {
+       await updateDoc(doc(db, 'artifacts', appId, 'users', sellerId, 'profile', 'data'), { isManuallyVerified: newStatus });
+       showNotification(newStatus ? "Insignia ÉLITE Otorgada" : "Insignia ÉLITE Retirada", "success");
+     } catch (e) {
+       setProfile({...profile, isManuallyVerified: !newStatus});
+       showNotification("Error al cambiar insignia.", "error");
+     }
   };
 
   if (!profile) return null;
@@ -1246,6 +1272,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
           
           <div className="flex flex-col lg:flex-row gap-10 relative z-10">
              
+             {/* COLUMNA IZQUIERDA (INFO Y ESTADÍSTICAS) */}
              <div className="w-full lg:w-1/3">
                 <div className="flex flex-col items-center text-center mb-6 relative group">
                    <div className="absolute inset-0 bg-orange-600 blur-3xl opacity-20 group-hover:opacity-40 transition-opacity rounded-full"></div>
@@ -1288,6 +1315,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
                    )}
                    {user?.uid === sellerId && <p className="text-xs text-gray-500 mt-2 italic">Estás viendo tu propio perfil público.</p>}
                    
+                   {/* BOTON SECRETO PARA AGENTES DE SOPORTE */}
                    {userData && (userData.role === 'admin' || userData.role === 'support') && (
                       <button onClick={toggleManualVerify} className="w-full py-2 mt-4 font-black uppercase tracking-widest border-2 border-purple-500 bg-purple-900/40 text-purple-300 hover:bg-purple-600 hover:text-white transition-all text-xs shadow-[0_0_15px_rgba(128,0,128,0.3)]">
                          [ADMIN] {profile.isManuallyVerified ? 'RETIRAR INSIGNIA ÉLITE' : 'OTORGAR INSIGNIA ÉLITE'}
@@ -1316,6 +1344,7 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
                 </div>
              </div>
 
+             {/* COLUMNA DERECHA (PESTAÑAS) */}
              <div className="w-full lg:w-2/3 border-l-2 border-gray-800 pl-0 lg:pl-10">
                 
                 <div className="flex gap-6 mb-8 border-b-2 border-gray-800 pb-4 overflow-x-auto custom-scrollbar">
