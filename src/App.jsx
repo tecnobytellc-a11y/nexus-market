@@ -405,32 +405,22 @@ const ChatSystem = ({ orderId, currentUserRole, currentUserId, orderStatus, onUp
 
   // ESCUCHA DE ÓRDENES Y ALERTAS DE SONIDO
   useEffect(() => {
-     if(!user) return;
-     let initialLoad = true;
-     const unsub = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('seller.id', '==', user.uid)), (snap) => {
-        if(initialLoad) { 
-          initialLoad = false; 
-          return; 
-        }
-        snap.docChanges().forEach((change) => {
-           const d = change.doc.data();
-           if (change.type === "added") { 
-             playSound('notif', isMuted); 
-             setUnreadAlerts(u=>u+1); 
-             showNotification(`NUEVA VENTA RECIBIDA: #${d.orderId}`, "success"); 
-             if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === "granted") {
-                try { new Notification("NEXUS STATION", { body: `NUEVA VENTA RECIBIDA: #${d.orderId}. Ingresa al Radar.` }); } catch(e){}
-             }
-           }
-           if (change.type === "modified" && d.status === 'payment_reported') { 
-             playSound('notif', isMuted); 
-             setUnreadAlerts(u=>u+1); 
-             showNotification(`PAGO REPORTADO EN #${d.orderId}`, "success"); 
-           }
-        });
+     if(!orderId) return;
+     const q = query(
+       collection(db, 'artifacts', appId, 'public', 'data', 'orders', orderId, 'messages'), 
+       orderBy('createdAt', 'asc')
+     );
+     
+     const unsubscribe = onSnapshot(q, (snapshot) => {
+       setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+       
+       if(snapshot.docs.length > 0 && snapshot.docs[snapshot.docs.length-1].data().senderId !== currentUserId) {
+         playSound('notif', isMuted);
+       }
      });
-     return () => unsub();
-  }, [user, isMuted]);
+     return () => unsubscribe();
+   }, [orderId, currentUserId, isMuted]);
 
   const sendMessage = async (text, type = 'text', imageUrl = null) => {
     if (!text && !imageUrl) return;
@@ -672,6 +662,21 @@ const ChatSystem = ({ orderId, currentUserRole, currentUserId, orderStatus, onUp
 // ============================================================================
 // 7. CENTRAL DE SOPORTE GENERAL
 // ============================================================================
+const SupportDashboard = ({ user, userData, setView, showNotification, isMuted }) => {
+  const [disputes, setDisputes] = useState([]); 
+  const [selectedDispute, setSelectedDispute] = useState(null); 
+  const [internalNote, setInternalNote] = useState('');
+
+  useEffect(() => { 
+    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('supportRequested', '==', true));
+    const unsub = onSnapshot(q, (snap) => { 
+      let fetched = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+      fetched.sort((a,b) => new Date(b.date) - new Date(a.date)); 
+      setDisputes(fetched); 
+    }); 
+    return () => unsub(); 
+  }, []);
+
   const claimCase = async (orderId) => { 
     playSound('click', isMuted); 
     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', orderId), { 
@@ -849,6 +854,7 @@ const ChatSystem = ({ orderId, currentUserRole, currentUserId, orderStatus, onUp
       )}
     </div>
   );
+};
 
 // ============================================================================
 // 8. RASTREADOR DE ÓRDENES (CLIENTE)
@@ -2222,72 +2228,6 @@ const LegalView = ({ setView }) => (
   </div>
 );
 
-// ============================================================================
-// COMPONENTES NUEVOS: RADAR, SOPORTE, WISHLIST, INVENTARIO CLIENTE
-// ============================================================================
-const SupportDashboard = ({ user, userData, setView, showNotification, isMuted }) => {
-  const [disputes, setDisputes] = useState([]); 
-  const [selectedDispute, setSelectedDispute] = useState(null); 
-  const [internalNote, setInternalNote] = useState('');
-
-  useEffect(() => { 
-    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('supportRequested', '==', true));
-    const unsub = onSnapshot(q, (snap) => { 
-      let fetched = snap.docs.map(d => ({id: d.id, ...d.data()})); 
-      fetched.sort((a,b) => new Date(b.date) - new Date(a.date)); 
-      setDisputes(fetched); 
-    }); 
-    return () => unsub(); 
-  }, []);
-
-  const claimCase = async (orderId) => { 
-    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', orderId), { supportAgent: user.uid, supportAgentName: userData.adminName || 'AGENTE' }); 
-  };
-
-  const addSecretNote = async () => { 
-    if(!internalNote) return; 
-    const currentNotes = selectedDispute.secretNotes || []; 
-    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', selectedDispute.id), { secretNotes: [...currentNotes, { text: internalNote, date: new Date().toISOString(), agent: userData.adminName }] }); 
-    setInternalNote(''); showNotification("Nota Secreta Agregada", "success"); 
-  };
-
-  const banSeller = async () => { 
-    if(!confirm("⚠️ ¿Banear la cuenta de este Vendedor Permanentemente?")) return; 
-    await updateDoc(doc(db, 'artifacts', appId, 'users', selectedDispute.seller.id, 'profile', 'data'), { isBanned: true, banReason: "Fraude" }); 
-    showNotification("VENDEDOR BANEADO", "error"); 
-  };
-
-  return (
-    <div className="animate-enter max-w-7xl mx-auto mt-10">
-      <div className="flex justify-between items-end mb-12 border-b-4 border-purple-800 pb-8 bg-black/40 p-8 rounded-xl shadow-[0_0_50px_rgba(128,0,128,0.3)]"><h2 className="text-5xl font-gamer text-white uppercase italic drop-shadow-[0_0_20px_purple] mb-2"><Headset size={48} className="inline text-purple-500"/> CENTRAL DE SOPORTE</h2><button onClick={() => setView('dashboard')} className="btn-secondary-ff px-8 py-3">&lt;&lt; VOLVER</button></div>
-      {!selectedDispute ? (
-         <div className="grid grid-cols-1 gap-6">
-            {disputes.map(d => (
-               <div key={d.id} className="hud-panel p-6 flex justify-between items-center border-purple-500/50 bg-gradient-to-r from-gray-900 to-black">
-                  <div><span className="text-orange-500 font-bold bg-orange-900/30 px-2 py-1 text-xs">ORDEN #{d.orderId}</span><h3 className="text-2xl font-black text-white uppercase mt-2">{d.item.title}</h3></div>
-                  <div className="text-right">
-                     {d.supportAgent ? ( d.supportAgent === user.uid ? <button onClick={() => setSelectedDispute(d)} className="btn-ff border-purple-400 px-6 py-3">ATENDER MI CASO</button> : <span className="text-purple-400 font-bold bg-purple-900/40 px-4 py-2 border-purple-500 rounded">TOMADO POR {d.supportAgentName}</span> ) : ( <button onClick={() => claimCase(d.id)} className="btn-secondary-ff border-purple-500 text-purple-300 px-6 py-3">ASIGNARME CASO</button> )}
-                  </div>
-               </div>
-            ))}
-         </div>
-      ) : (
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[75vh] animate-enter">
-            <div className="flex flex-col gap-4 overflow-y-auto pr-2">
-               <div className="bg-black/80 border-2 border-purple-600 p-6 rounded-lg shadow-[0_0_30px_rgba(128,0,128,0.2)]">
-                  <div className="flex justify-between border-b-2 border-purple-600 pb-4 mb-6"><h3 className="text-3xl font-gamer text-white"><FileWarning className="inline"/> DOSSIER</h3><button onClick={() => setSelectedDispute(null)} className="text-red-500 font-bold">CERRAR DOSSIER</button></div>
-                  <div className="bg-gray-900/80 p-4 rounded border-l-4 border-cyan-500 relative mb-4"><button onClick={banSeller} className="absolute top-3 right-3 text-red-500 font-black text-[10px]">BANEAR</button><h4 className="text-cyan-400 font-black mb-2 uppercase">VENDEDOR</h4><p>Admin: {selectedDispute.seller.adminName}</p><p>ID: {selectedDispute.seller.idNumber}</p></div>
-                  <div className="bg-gray-900/80 p-4 rounded border-l-4 border-orange-500"><h4 className="text-orange-400 font-black mb-2 uppercase">COMPRADOR</h4><p>Nombre: {selectedDispute.buyer.firstName}</p><p>ID: {selectedDispute.buyer.idNumber}</p></div>
-               </div>
-               <div className="bg-gray-950 border-2 border-gray-800 p-6 rounded-lg"><h4 className="text-gray-400 font-black mb-4 uppercase">Notas Secretas</h4><div className="flex gap-2"><input value={internalNote} onChange={e=>setInternalNote(e.target.value)} className="flex-grow bg-black border border-gray-700 text-white p-2"/><button onClick={addSecretNote} className="bg-purple-900/50 text-purple-400 px-4">GUARDAR</button></div></div>
-            </div>
-            <div className="flex flex-col h-full"><ChatSystem orderId={selectedDispute.id} currentUserRole="SOPORTE" currentUserId={user.uid} orderStatus={selectedDispute.status} onUpdateStatus={()=>{}} orderData={selectedDispute}/></div>
-         </div>
-      )}
-    </div>
-  );
-};
-
 // --- FOOTER PROFESIONAL ---
 const Footer = ({ setView }) => (
   <footer className="bg-gradient-to-b from-black to-gray-950 pt-20 pb-12 border-t-4 border-red-900 mt-32 relative z-20 shadow-[0_-20px_50px_rgba(255,0,0,0.2)] font-sans">
@@ -2346,6 +2286,220 @@ const Footer = ({ setView }) => (
     </div>
   </footer>
 );
+
+// ============================================================================
+// COMPONENTES RESTAURADOS (NUEVOS): NAVBAR, MARKETPLACE, CARDS Y MODAL
+// ============================================================================
+const Navbar = ({ user, userData, setView, onLogout, isMuted, setIsMuted, unreadAlerts }) => (
+  <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b-2 border-orange-600/50 shadow-[0_5px_20px_rgba(255,69,0,0.3)]">
+    <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div className="flex items-center gap-4 cursor-pointer" onClick={() => setView('home')}>
+        <img src={nexusLogo} alt="Logo" className="h-12 hover:scale-110 transition-transform" />
+        <span className="text-2xl font-gamer text-white hidden md:block text-shadow-glow">NEXUS STATION</span>
+      </div>
+      <div className="flex items-center gap-4">
+        <button onClick={() => setIsMuted(!isMuted)} className="text-gray-400 hover:text-white">
+          {isMuted ? <VolumeX /> : <Volume2 />}
+        </button>
+        <button onClick={() => setView('track-order')} className="text-cyan-400 hover:text-white font-tech uppercase font-bold text-sm hidden md:block flex items-center gap-2">
+          <Radar className="inline" size={16}/> Radar
+        </button>
+        {user ? (
+          <>
+            <button onClick={() => setView('wishlist')} className="text-pink-500 hover:text-pink-400"><Heart /></button>
+            <button onClick={() => setView('buyer-inventory')} className="text-blue-500 hover:text-blue-400"><Package /></button>
+            {(userData?.role === 'admin' || userData?.role === 'support') && (
+              <button onClick={() => setView('support')} className="text-purple-500 hover:text-purple-400 relative">
+                <Headphones />
+              </button>
+            )}
+            <button onClick={() => setView('dashboard')} className="btn-secondary-ff px-4 py-2 text-sm flex gap-2 items-center relative">
+              <User size={16}/> BASE
+              {unreadAlerts > 0 && <span className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] animate-pulse">{unreadAlerts}</span>}
+            </button>
+            <button onClick={onLogout} className="text-red-500 hover:text-red-400"><LogOut /></button>
+          </>
+        ) : (
+          <button onClick={() => setView('login')} className="btn-ff px-6 py-2 text-sm">INGRESAR</button>
+        )}
+      </div>
+    </div>
+  </nav>
+);
+
+const ProductCard = ({ item, index, onBuy, onViewSeller }) => {
+  const isDiscounted = item.discountActive;
+  return (
+    <div className={`hud-panel flex flex-col group h-full border-b-4 border-orange-500 animate-enter-delay-${(index % 3) + 1}`}>
+      <div className="relative h-60 bg-black overflow-hidden clip-path-bottom-slant cursor-pointer" onClick={onViewSeller}>
+        <img src={item.images?.[0]} onError={(e)=>e.target.style.display='none'} className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-700" alt={item.title}/>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
+        <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/90 px-3 py-1 rounded border-l-2 border-yellow-500 z-20">
+          <User size={14} className="text-yellow-500"/>
+          <span className="text-[10px] font-tech text-white uppercase">{item.adminName || item.sellerUsername}</span>
+        </div>
+        {item.isManuallyVerified && (
+           <div className="absolute top-4 left-4 bg-gradient-to-r from-red-900 to-yellow-900 border border-yellow-500 px-2 py-1 rounded shadow-[0_0_10px_gold] z-20 flex items-center gap-1">
+             <ShieldCheck size={12} className="text-yellow-400"/> <span className="text-[10px] text-yellow-500 font-black">ÉLITE</span>
+           </div>
+        )}
+      </div>
+      <div className="p-6 flex-grow flex flex-col relative bg-gradient-to-b from-transparent to-black/90">
+        <h3 className="font-tech font-black text-white text-xl leading-tight mb-4 uppercase drop-shadow-md">{item.title}</h3>
+        <div className="mt-auto border-t border-gray-800 pt-4 flex justify-between items-end">
+          <span className="text-4xl font-gamer text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+            {formatCurrency(isDiscounted ? item.discountPrice : item.price)}
+          </span>
+          <button onClick={(e)=>{e.stopPropagation(); onBuy();}} className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-black p-3 hover:scale-110 transition-transform clip-path-polygon border border-yellow-200 shadow-[0_0_15px_rgba(255,215,0,0.5)]">
+            <ShoppingBag size={20} strokeWidth={3} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Marketplace = ({ listings, setPurchaseItem, setView, user, setViewSellerId, isMuted, showNotification, filterType, setFilterType }) => {
+  const activeListings = listings.filter(l => l.isActive !== false);
+  
+  return (
+    <div className="max-w-7xl mx-auto animate-enter">
+      <div className="mb-12 text-center md:text-left bg-black/40 p-8 rounded-xl border-b-4 border-orange-600 shadow-[0_0_50px_rgba(255,69,0,0.2)]">
+        <h1 className="text-6xl md:text-8xl font-gamer text-white uppercase italic text-shadow-glow drop-shadow-[0_0_20px_rgba(255,69,0,0.8)] mb-4">Mercado Negro</h1>
+        <p className="font-tech text-cyan-400 tracking-[0.4em] text-xl md:text-2xl uppercase font-bold">Adquiere suministros de élite asegurados por Escrow.</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {activeListings.length === 0 ? (
+          <div className="col-span-full text-center py-20 bg-black/50 border-2 border-dashed border-gray-700 rounded-xl">
+            <ScanFace size={64} className="mx-auto text-gray-600 mb-4 opacity-50"/>
+            <p className="text-2xl text-gray-500 font-tech uppercase tracking-widest">Radar despejado. No hay suministros disponibles.</p>
+          </div>
+        ) : (
+          activeListings.map((item, index) => (
+            <ProductCard key={item.id} item={item} index={index} onBuy={() => setPurchaseItem(item)} onViewSeller={() => setViewSellerId(item.sellerId)} />
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+const PurchaseModal = ({ item, onClose, showNotification, isMuted }) => {
+  const [step, setStep] = useState(1);
+  const [buyerData, setBuyerData] = useState({ firstName: '', lastName: '', idNumber: '', whatsapp: '', email: '', state: '', country: 'Venezuela' });
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [exchangeRate, setExchangeRate] = useState(0);
+
+  useEffect(() => {
+    const fetchMethods = async () => {
+      const snap = await getDocs(collection(db, 'artifacts', appId, 'users', item.sellerId, 'paymentMethods'));
+      setPaymentMethods(snap.docs.map(d => ({id: d.id, ...d.data()})));
+      const rate = await getExchangeRate();
+      setExchangeRate(rate);
+    };
+    fetchMethods();
+  }, [item.sellerId]);
+
+  const handleProceed = () => {
+    playSound('click', isMuted);
+    if(!buyerData.firstName || !buyerData.email || !buyerData.whatsapp || !buyerData.idNumber) return showNotification("Complete todos los campos del comprador", "error");
+    setStep(2);
+  };
+
+  const handleCheckout = async () => {
+    playSound('click', isMuted);
+    if(!selectedMethod) return showNotification("Seleccione un método de pago", "error");
+    setLoading(true);
+    try {
+      const orderId = 'ORD-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+      const totalUSD = item.discountActive ? item.discountPrice : item.price;
+      const totalVES = totalUSD * exchangeRate;
+      
+      const sellerSnap = await getDoc(doc(db, 'artifacts', appId, 'users', item.sellerId, 'profile', 'data'));
+      const sellerData = sellerSnap.exists() ? sellerSnap.data() : { adminName: item.adminName, publicUsername: item.sellerUsername };
+
+      const orderPayload = {
+        orderId,
+        item: { id: item.id, title: item.title, price: totalUSD },
+        buyer: buyerData,
+        seller: { id: item.sellerId, adminName: sellerData.adminName, username: sellerData.publicUsername, whatsapp: sellerData.whatsapp || '' },
+        payment: { 
+          method: selectedMethod.name, 
+          currency: selectedMethod.currency, 
+          totalUSD: totalUSD, 
+          totalVES: selectedMethod.currency === 'VES' ? totalVES : 0, 
+          rateUsed: exchangeRate 
+        },
+        status: 'created',
+        date: new Date().toISOString(),
+        createdAt: serverTimestamp(),
+        supportRequested: false
+      };
+
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), orderPayload);
+      showNotification("ORDEN CREADA EXITOSAMENTE", "success");
+      playSound('success', isMuted);
+      onClose();
+    } catch(e) {
+      showNotification("Error al procesar la orden", "error");
+      playSound('error', isMuted);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4">
+      <div className="hud-panel p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar shadow-[0_0_80px_rgba(255,69,0,0.5)] border-2 border-orange-500">
+         <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-red-500 z-50"><X size={32}/></button>
+         <h2 className="text-4xl font-gamer text-white uppercase text-shadow-glow mb-8 border-b-2 border-orange-600 pb-4 flex items-center gap-3"><ShoppingBag className="text-orange-500"/> PROTOCOLO DE COMPRA</h2>
+         
+         {step === 1 ? (
+           <div className="space-y-6 animate-enter">
+             <h3 className="text-cyan-400 font-tech font-bold uppercase tracking-widest">1. Identificación del Comprador</h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-black/50 p-6 border border-gray-800 rounded">
+                <input className="input-ff p-4" placeholder="Nombres *" value={buyerData.firstName} onChange={e=>setBuyerData({...buyerData, firstName: e.target.value})} />
+                <input className="input-ff p-4" placeholder="Apellidos" value={buyerData.lastName} onChange={e=>setBuyerData({...buyerData, lastName: e.target.value})} />
+                <input className="input-ff p-4" placeholder="Cédula / ID *" value={buyerData.idNumber} onChange={e=>setBuyerData({...buyerData, idNumber: e.target.value})} />
+                <input className="input-ff p-4" placeholder="WhatsApp *" value={buyerData.whatsapp} onChange={e=>setBuyerData({...buyerData, whatsapp: e.target.value})} />
+                <input className="input-ff p-4" placeholder="Correo Electrónico *" type="email" value={buyerData.email} onChange={e=>setBuyerData({...buyerData, email: e.target.value})} />
+                <input className="input-ff p-4" placeholder="Estado / Provincia" value={buyerData.state} onChange={e=>setBuyerData({...buyerData, state: e.target.value})} />
+             </div>
+             <button onClick={handleProceed} className="btn-ff w-full py-4 text-xl tracking-widest mt-4">CONTINUAR AL PAGO</button>
+           </div>
+         ) : (
+           <div className="space-y-6 animate-enter">
+             <h3 className="text-cyan-400 font-tech font-bold uppercase tracking-widest">2. Recepción de Fondos</h3>
+             <div className="bg-gray-900/80 p-6 rounded border-l-4 border-yellow-500">
+               <p className="text-gray-400 uppercase font-bold text-sm">Total a Pagar:</p>
+               <p className="text-4xl font-gamer text-yellow-500">${item.discountActive ? item.discountPrice : item.price}</p>
+               {exchangeRate > 0 && <p className="text-sm text-green-400 mt-2 font-mono">Tasa VES: {exchangeRate} | Total Aprox: {formatCurrency((item.discountActive ? item.discountPrice : item.price) * exchangeRate, 'VES')}</p>}
+             </div>
+             
+             <h4 className="text-white font-tech uppercase tracking-widest mt-6 mb-2">Métodos Disponibles del Comandante:</h4>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               {paymentMethods.length === 0 && <p className="text-red-500 font-bold">El vendedor no tiene métodos de pago configurados.</p>}
+               {paymentMethods.map(m => (
+                 <div key={m.id} onClick={()=>{playSound('click', isMuted); setSelectedMethod(m);}} className={`p-4 border-2 rounded cursor-pointer transition-all ${selectedMethod?.id === m.id ? 'border-orange-500 bg-orange-900/30 shadow-[0_0_15px_rgba(255,69,0,0.4)]' : 'border-gray-700 bg-black/60 hover:border-gray-500'}`}>
+                   <p className="font-black text-white uppercase">{m.name} <span className="text-xs text-cyan-400 ml-2 bg-cyan-900/30 px-2 py-1 rounded">{m.currency}</span></p>
+                   <p className="text-xs text-gray-400 mt-2 font-mono whitespace-pre-wrap">{m.details}</p>
+                 </div>
+               ))}
+             </div>
+             
+             <div className="flex gap-4 mt-8">
+               <button onClick={()=>{playSound('click', isMuted); setStep(1);}} className="flex-1 btn-secondary-ff py-4 font-bold text-lg">&lt;&lt; VOLVER</button>
+               <button onClick={handleCheckout} disabled={loading} className="flex-1 btn-ff py-4 text-xl tracking-widest shadow-[0_0_30px_rgba(255,69,0,0.5)]">{loading ? 'PROCESANDO...' : 'CREAR ORDEN'}</button>
+             </div>
+           </div>
+         )}
+      </div>
+    </div>
+  );
+};
 
 // ============================================================================
 // 15. MAIN APP COMPONENT (ROOT)
