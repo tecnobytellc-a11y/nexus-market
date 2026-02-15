@@ -2597,6 +2597,52 @@ export default function App() {
   const [isMuted, setIsMuted] = useState(false);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [filterType, setFilterType] = useState('recent');
+  // ESTADOS DEL FIREWALL ANTI-VPN
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockReason, setBlockReason] = useState("");
+
+  // MOTOR DEL FIREWALL ANTI-VPN
+  useEffect(() => {
+    const runFirewall = async () => {
+      try {
+        const ip = await getIP();
+        if (ip === "IP_OCULTA") throw new Error("IP protegida por navegador");
+        
+        // Formateamos la IP para que Firebase la acepte como nombre de documento
+        const sanitizedIp = ip.replace(/\./g, '_').replace(/:/g, '_');
+        
+        // 1. Revisar si la IP ya fue baneada permanentemente en el pasado
+        const banRef = doc(db, 'artifacts', appId, 'security', 'bannedIPs', sanitizedIp);
+        const banSnap = await getDoc(banRef);
+        
+        if (banSnap.exists()) {
+           setIsBlocked(true);
+           setBlockReason("Tu dirección IP ha sido bloqueada de forma permanente por violar las políticas de seguridad (Uso de VPN/Proxy detectado previamente).");
+           return;
+        }
+
+        // 2. Si es una IP nueva, analizamos su nivel de amenaza
+        const res = await fetch(`https://proxycheck.io/v2/${ip}?vpn=1`);
+        const data = await res.json();
+
+        // 3. Si la API confirma que es un VPN, Proxy o nodo TOR
+        if (data[ip] && data[ip].proxy === "yes") {
+           // Lo sentenciamos en Firebase para que nunca más pueda entrar
+           await setDoc(banRef, {
+              ip: ip,
+              reason: "Uso de VPN, Proxy o red anonimizadora",
+              blockedAt: serverTimestamp()
+           });
+           setIsBlocked(true);
+           setBlockReason("ACCESO DENEGADO. Hemos detectado el uso de un VPN, Proxy o red anonimizadora. Tu dirección IP ha sido bloqueada del servidor.");
+        }
+      } catch (error) {
+        console.warn("Firewall: Análisis de IP omitido temporalmente.");
+      }
+    };
+
+    runFirewall();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -2659,6 +2705,27 @@ export default function App() {
     showNotification("Sesión finalizada"); 
   };
 
+// PANTALLA DE BLOQUEO ABSOLUTO
+  if (isBlocked) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-center p-6 relative overflow-hidden">
+         <Styles />
+         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+         <div className="absolute inset-0 bg-red-900/20 animate-pulse"></div>
+         <ShieldAlert size={120} className="text-red-600 mb-8 drop-shadow-[0_0_30px_red] animate-bounce relative z-10"/>
+         <h1 className="text-5xl md:text-7xl font-gamer text-white uppercase mb-4 text-shadow-glow relative z-10">
+           ACCESO RESTRINGIDO
+         </h1>
+         <p className="text-xl md:text-2xl font-tech text-red-400 uppercase tracking-widest max-w-3xl border-2 border-red-600 bg-red-950/80 p-8 rounded-lg shadow-[0_0_50px_rgba(255,0,0,0.5)] relative z-10">
+           {blockReason}
+         </p>
+         <div className="mt-12 text-gray-500 font-tech uppercase tracking-widest text-sm relative z-10 border-t border-red-900 pt-4">
+           Sistema de Seguridad Escrow P2P • IP Registrada y Bloqueada
+         </div>
+      </div>
+    );
+  }
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center text-yellow-500 font-gamer text-3xl relative overflow-hidden">
