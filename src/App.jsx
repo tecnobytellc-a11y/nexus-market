@@ -2294,7 +2294,8 @@ const Navbar = ({ user, userData, setView, onLogout, isMuted, setIsMuted, unread
   <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b-2 border-orange-600/50 shadow-[0_5px_20px_rgba(255,69,0,0.3)]">
     <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
       <div className="flex items-center gap-4 cursor-pointer" onClick={() => setView('home')}>
-        <img src={nexusLogo} alt="Logo" className="h-12 hover:scale-110 transition-transform" />
+        {/* AQUÍ SE RESTAURÓ EL EFECTO GLITCH, LUZ Y FLOTANTE (logo-hyper-anim) */}
+        <img src={nexusLogo} alt="Logo" className="h-12 md:h-16 object-contain logo-hyper-anim drop-shadow-[0_0_15px_rgba(255,69,0,0.8)]" />
         <span className="text-2xl font-gamer text-white hidden md:block text-shadow-glow">NEXUS STATION</span>
       </div>
       <div className="flex items-center gap-4">
@@ -2360,23 +2361,60 @@ const ProductCard = ({ item, index, onBuy, onViewSeller }) => {
 };
 
 const Marketplace = ({ listings, setPurchaseItem, setView, user, setViewSellerId, isMuted, showNotification, filterType, setFilterType }) => {
+  // LÓGICA DE BÚSQUEDA RESTAURADA
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const activeListings = listings.filter(l => l.isActive !== false);
+  
+  // FILTRADO DE PUBLICACIONES Y VENDEDORES
+  const filteredListings = activeListings.filter(item => {
+    const term = searchTerm.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(term) ||
+      (item.description && item.description.toLowerCase().includes(term)) ||
+      (item.adminName && item.adminName.toLowerCase().includes(term)) ||
+      (item.sellerUsername && item.sellerUsername.toLowerCase().includes(term))
+    );
+  });
   
   return (
     <div className="max-w-7xl mx-auto animate-enter">
-      <div className="mb-12 text-center md:text-left bg-black/40 p-8 rounded-xl border-b-4 border-orange-600 shadow-[0_0_50px_rgba(255,69,0,0.2)]">
-        <h1 className="text-6xl md:text-8xl font-gamer text-white uppercase italic text-shadow-glow drop-shadow-[0_0_20px_rgba(255,69,0,0.8)] mb-4">Mercado Negro</h1>
-        <p className="font-tech text-cyan-400 tracking-[0.4em] text-xl md:text-2xl uppercase font-bold">Adquiere suministros de élite asegurados por Escrow.</p>
+      <div className="mb-12 flex flex-col md:flex-row items-center justify-between bg-black/40 p-8 md:p-12 rounded-xl border-b-4 border-orange-600 shadow-[0_0_50px_rgba(255,69,0,0.2)] gap-8 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-900/20 to-transparent pointer-events-none"></div>
+        
+        <div className="text-center md:text-left relative z-10 w-full md:w-auto">
+          {/* CARTEL DE TEMPORADA DE FUEGO RESTAURADO */}
+          <div className="inline-block bg-orange-600 text-white font-black font-tech px-4 py-1 text-sm md:text-base uppercase tracking-widest mb-4 border border-orange-400 shadow-[0_0_15px_rgba(255,69,0,0.8)] animate-pulse">
+            🔥 TEMPORADA DE FUEGO
+          </div>
+          {/* TÍTULO GIGANTE RESTAURADO */}
+          <h1 className="text-7xl md:text-9xl font-gamer text-white uppercase italic text-shadow-glow drop-shadow-[0_0_30px_rgba(255,69,0,0.8)] mb-4">Mercado Negro</h1>
+          <p className="font-tech text-cyan-400 tracking-[0.4em] text-xl md:text-3xl uppercase font-bold">Adquiere suministros de élite asegurados por Escrow.</p>
+        </div>
+
+        {/* BARRA DE BÚSQUEDA FÍSICA Y VISUAL RESTAURADA */}
+        <div className="w-full md:w-96 relative z-10">
+          <div className="input-wrapper relative group">
+            <Search className="w-6 h-6 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 z-10 group-focus-within:text-orange-500 transition-colors"/>
+            <input 
+              type="text" 
+              placeholder="Buscar armas, cuentas, vendedores..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-black/80 border-2 border-orange-500/50 focus:border-orange-500 text-white font-tech text-lg py-4 pl-14 pr-4 rounded-lg shadow-[inset_0_0_20px_rgba(255,69,0,0.2)] focus:shadow-[0_0_25px_rgba(255,69,0,0.5)] outline-none transition-all placeholder-gray-500"
+            />
+          </div>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {activeListings.length === 0 ? (
-          <div className="col-span-full text-center py-20 bg-black/50 border-2 border-dashed border-gray-700 rounded-xl">
-            <ScanFace size={64} className="mx-auto text-gray-600 mb-4 opacity-50"/>
-            <p className="text-2xl text-gray-500 font-tech uppercase tracking-widest">Radar despejado. No hay suministros disponibles.</p>
+        {filteredListings.length === 0 ? (
+          <div className="col-span-full text-center py-24 bg-black/50 border-2 border-dashed border-gray-700 rounded-xl">
+            <ScanFace size={80} className="mx-auto text-gray-600 mb-6 opacity-50 animate-pulse"/>
+            <p className="text-3xl text-gray-500 font-tech uppercase tracking-widest">Radar despejado. No hay suministros que coincidan.</p>
           </div>
         ) : (
-          activeListings.map((item, index) => (
+          filteredListings.map((item, index) => (
             <ProductCard key={item.id} item={item} index={index} onBuy={() => setPurchaseItem(item)} onViewSeller={() => setViewSellerId(item.sellerId)} />
           ))
         )}
