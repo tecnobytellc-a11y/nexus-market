@@ -1133,42 +1133,57 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
 
   useEffect(() => {
     const load = async () => {
-      const docSnap = await getDoc(doc(db, 'artifacts', appId, 'users', sellerId, 'profile', 'data'));
-      if (docSnap.exists()) setProfile(docSnap.data());
-      
-      const qOrders = query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('seller.id', '==', sellerId), where('status', '==', 'completed'));
-      const salesSnap = await getDocs(qOrders);
-      setSalesCount(salesSnap.size);
+      // 1. Cargar Info Principal
+      try {
+        const docSnap = await getDoc(doc(db, 'artifacts', appId, 'users', sellerId, 'profile', 'data'));
+        if (docSnap.exists()) setProfile(docSnap.data());
+      } catch (e) { console.error("Error perfil:", e); }
 
-      const qListings = query(collection(db, 'artifacts', appId, 'public', 'data', 'listings'), where('sellerId', '==', sellerId), where('isActive', '!=', false));
-      const listingsSnap = await getDocs(qListings);
-      setSellerListings(listingsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      // 2. Cargar Ventas (Filtrado seguro en JS)
+      try {
+        const qOrders = query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('seller.id', '==', sellerId));
+        const salesSnap = await getDocs(qOrders);
+        setSalesCount(salesSnap.docs.filter(d => d.data().status === 'completed').length);
+      } catch (e) { console.error("Error órdenes:", e); }
 
-      // Calcular Estrellas Dinámicas
-      const qRatings = query(collection(db, 'artifacts', appId, 'users', sellerId, 'ratings'));
-      const ratingsSnap = await getDocs(qRatings);
-      const fetchedRatings = ratingsSnap.docs.map(d => d.data());
-      
-      if(fetchedRatings.length > 0) {
-         let totalScore = 0;
-         fetchedRatings.forEach(r => {
-            if(r.type === 'good') totalScore += 5;
-            else if(r.type === 'neutral') totalScore += 3;
-            else totalScore += 1;
-         });
-         setAvgRating(totalScore / fetchedRatings.length);
-      } else {
-         setAvgRating(0);
-      }
+      // 3. Cargar Arsenal (Filtrado seguro en JS para evitar bloqueo de Firebase)
+      try {
+        const qListings = query(collection(db, 'artifacts', appId, 'public', 'data', 'listings'), where('sellerId', '==', sellerId));
+        const listingsSnap = await getDocs(qListings);
+        setSellerListings(listingsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => item.isActive !== false));
+      } catch (e) { console.error("Error Arsenal:", e); }
 
-      const followersSnap = await getDocs(collection(db, 'artifacts', appId, 'users', sellerId, 'followers'));
-      setFollowerCount(followersSnap.size);
-      
-      if(user) {
-         const myFollow = await getDoc(doc(db, 'artifacts', appId, 'users', sellerId, 'followers', user.uid));
-         setIsFollowing(myFollow.exists());
-      }
+      // 4. Cargar Estrellas y Reputación
+      try {
+        const qRatings = query(collection(db, 'artifacts', appId, 'users', sellerId, 'ratings'));
+        const ratingsSnap = await getDocs(qRatings);
+        const fetchedRatings = ratingsSnap.docs.map(d => d.data());
+        
+        if(fetchedRatings.length > 0) {
+           let totalScore = 0;
+           fetchedRatings.forEach(r => {
+              if(r.type === 'good') totalScore += 5;
+              else if(r.type === 'neutral') totalScore += 3;
+              else totalScore += 1;
+           });
+           setAvgRating(totalScore / fetchedRatings.length);
+        } else {
+           setAvgRating(0);
+        }
+      } catch (e) { console.error("Error reputación:", e); }
+
+      // 5. Cargar Seguidores (Ahora funciona independientemente del Arsenal)
+      try {
+        const followersSnap = await getDocs(collection(db, 'artifacts', appId, 'users', sellerId, 'followers'));
+        setFollowerCount(followersSnap.size);
+        
+        if(user) {
+           const myFollow = await getDoc(doc(db, 'artifacts', appId, 'users', sellerId, 'followers', user.uid));
+           setIsFollowing(myFollow.exists());
+        }
+      } catch (e) { console.error("Error seguidores:", e); }
     };
+    
     load();
   }, [sellerId, user]);
 
@@ -1179,15 +1194,19 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
      
      const ref = doc(db, 'artifacts', appId, 'users', sellerId, 'followers', user.uid);
      
-     if(isFollowing) { 
-       await deleteDoc(ref); 
-       setIsFollowing(false); 
-       setFollowerCount(f => f - 1); 
-     } else { 
-       await setDoc(ref, { followedAt: serverTimestamp() }); 
-       setIsFollowing(true); 
-       setFollowerCount(f => f + 1); 
-       showNotification("¡COMANDANTE SEGUIDO!", "success");
+     try {
+       if(isFollowing) { 
+         await deleteDoc(ref); 
+         setIsFollowing(false); 
+         setFollowerCount(f => Math.max(0, f - 1)); 
+       } else { 
+         await setDoc(ref, { followedAt: serverTimestamp() }); 
+         setIsFollowing(true); 
+         setFollowerCount(f => f + 1); 
+         showNotification("¡COMANDANTE SEGUIDO!", "success");
+       }
+     } catch (e) {
+       showNotification("Error de conexión al procesar el servidor", "error");
      }
   };
 
@@ -1204,7 +1223,6 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
   const xp = salesCount * 150;
   const rank = getRankInfo(xp);
   
-  // Lógica de Insignia Dorada Élite
   const isVerifiedElite = profile.isManuallyVerified || (salesCount >= 1000 && avgRating >= 4.5);
 
   const renderStars = () => {
@@ -1228,7 +1246,6 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
           
           <div className="flex flex-col lg:flex-row gap-10 relative z-10">
              
-             {/* COLUMNA IZQUIERDA (INFO Y ESTADÍSTICAS) */}
              <div className="w-full lg:w-1/3">
                 <div className="flex flex-col items-center text-center mb-6 relative group">
                    <div className="absolute inset-0 bg-orange-600 blur-3xl opacity-20 group-hover:opacity-40 transition-opacity rounded-full"></div>
@@ -1250,7 +1267,6 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
                         {profile.publicUsername}
                       </h2>
                       
-                      {/* INSIGNIA ÉLITE DORADA/ROJA */}
                       {isVerifiedElite && (
                          <div className="relative group/badge animate-pulse cursor-help" title={profile.isManuallyVerified ? "Verificación Oficial por Soporte" : "Verificación Automática (1000+ Ventas y 4.5+ Estrellas)"}>
                             <div className="flex items-center gap-1 bg-gradient-to-r from-red-900 to-yellow-900 border-2 border-yellow-500 px-3 py-1 rounded-full shadow-[0_0_15px_rgba(255,215,0,0.5)]">
@@ -1267,12 +1283,11 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
 
                    {user?.uid !== sellerId && (
                       <button onClick={toggleFollow} className={`w-full py-3 font-black uppercase tracking-widest border-2 transition-all ${isFollowing ? 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-red-900 hover:border-red-500 hover:text-red-400' : 'bg-gradient-to-r from-orange-600 to-red-600 text-white border-orange-400 shadow-[0_0_20px_rgba(255,69,0,0.5)] hover:scale-105'}`}>
-                         {isFollowing ? 'DEJAR DE SEGUIR' : 'SEGUIR COMANDANTE'}
+                         {isFollowing ? '✅ SIGUIENDO' : 'SEGUIR COMANDANTE'}
                       </button>
                    )}
                    {user?.uid === sellerId && <p className="text-xs text-gray-500 mt-2 italic">Estás viendo tu propio perfil público.</p>}
                    
-                   {/* BOTON SECRETO PARA AGENTES DE SOPORTE */}
                    {userData && (userData.role === 'admin' || userData.role === 'support') && (
                       <button onClick={toggleManualVerify} className="w-full py-2 mt-4 font-black uppercase tracking-widest border-2 border-purple-500 bg-purple-900/40 text-purple-300 hover:bg-purple-600 hover:text-white transition-all text-xs shadow-[0_0_15px_rgba(128,0,128,0.3)]">
                          [ADMIN] {profile.isManuallyVerified ? 'RETIRAR INSIGNIA ÉLITE' : 'OTORGAR INSIGNIA ÉLITE'}
@@ -1301,7 +1316,6 @@ const SellerProfileView = ({ sellerId, onClose, onBuy, user, userData, showNotif
                 </div>
              </div>
 
-             {/* COLUMNA DERECHA (PESTAÑAS) */}
              <div className="w-full lg:w-2/3 border-l-2 border-gray-800 pl-0 lg:pl-10">
                 
                 <div className="flex gap-6 mb-8 border-b-2 border-gray-800 pb-4 overflow-x-auto custom-scrollbar">
