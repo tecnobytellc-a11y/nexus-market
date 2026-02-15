@@ -9,6 +9,7 @@ import {
   onAuthStateChanged, 
   sendPasswordResetEmail
 } from 'firebase/auth';
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { 
   getFirestore, 
   collection, 
@@ -2671,21 +2672,50 @@ export default function App() {
 
     runFirewall();
   }, []);
-
+  
+    // 1. AUTENTICACIÓN Y GENERACIÓN DE TOKEN PUSH
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        const snap = await getDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'));
-        if (snap.exists()) setUserData(snap.data());
-      } else { 
-        setUserData(null); 
+        try {
+          const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+             setUserData(docSnap.data());
+             
+             // 🔥 NUEVO: PEDIR PERMISO PARA NOTIFICACIONES PUSH Y GUARDAR TOKEN
+             try {
+                const messaging = getMessaging();
+                const permission = await Notification.requestPermission();
+                
+                if (permission === 'granted') {
+                   // REEMPLAZA "TU_LLAVE_VAPID_AQUI" CON LA QUE COPIASTE EN EL PASO 1
+                   const currentToken = await getToken(messaging, { vapidKey: 'BIN_RrF2l5nJufPh49f7VrOtlHsmbHO3b4nWuHOalLPHyS1ebcJ094ZLuYI4-8shiP8yq7mh1Fa6c7MEDVR7JGQ' });
+                   if (currentToken) {
+                      // Guardamos el token en su perfil para poder enviarle mensajes luego
+                      await updateDoc(docRef, { fcmToken: currentToken });
+                   }
+                }
+             } catch (pushError) {
+                console.warn("Permiso Push denegado o no soportado en este navegador.", pushError);
+             }
+
+          } else {
+             setUserData({ role: 'buyer' });
+          }
+        } catch (e) {
+          console.error("Error cargando rol del usuario:", e);
+        }
+      } else {
+        setUserData(null);
       }
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
-
+    
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'listings'), (snapshot) => {
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
