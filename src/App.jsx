@@ -2238,6 +2238,115 @@ const LegalView = ({ setView }) => (
   </div>
 );
 
+// ============================================================================
+// COMPONENTES NUEVOS: RADAR, SOPORTE, WISHLIST, INVENTARIO CLIENTE
+// ============================================================================
+const SupportDashboard = ({ user, userData, setView, showNotification, isMuted }) => {
+  const [disputes, setDisputes] = useState([]); 
+  const [selectedDispute, setSelectedDispute] = useState(null); 
+  const [internalNote, setInternalNote] = useState('');
+
+  useEffect(() => { 
+    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('supportRequested', '==', true));
+    const unsub = onSnapshot(q, (snap) => { 
+      let fetched = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+      fetched.sort((a,b) => new Date(b.date) - new Date(a.date)); 
+      setDisputes(fetched); 
+    }); 
+    return () => unsub(); 
+  }, []);
+
+  const claimCase = async (orderId) => { 
+    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', orderId), { supportAgent: user.uid, supportAgentName: userData.adminName || 'AGENTE' }); 
+  };
+
+  const addSecretNote = async () => { 
+    if(!internalNote) return; 
+    const currentNotes = selectedDispute.secretNotes || []; 
+    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', selectedDispute.id), { secretNotes: [...currentNotes, { text: internalNote, date: new Date().toISOString(), agent: userData.adminName }] }); 
+    setInternalNote(''); showNotification("Nota Secreta Agregada", "success"); 
+  };
+
+  const banSeller = async () => { 
+    if(!confirm("⚠️ ¿Banear la cuenta de este Vendedor Permanentemente?")) return; 
+    await updateDoc(doc(db, 'artifacts', appId, 'users', selectedDispute.seller.id, 'profile', 'data'), { isBanned: true, banReason: "Fraude" }); 
+    showNotification("VENDEDOR BANEADO", "error"); 
+  };
+
+  return (
+    <div className="animate-enter max-w-7xl mx-auto mt-10">
+      <div className="flex justify-between items-end mb-12 border-b-4 border-purple-800 pb-8 bg-black/40 p-8 rounded-xl shadow-[0_0_50px_rgba(128,0,128,0.3)]"><h2 className="text-5xl font-gamer text-white uppercase italic drop-shadow-[0_0_20px_purple] mb-2"><Headset size={48} className="inline text-purple-500"/> CENTRAL DE SOPORTE</h2><button onClick={() => setView('dashboard')} className="btn-secondary-ff px-8 py-3">&lt;&lt; VOLVER</button></div>
+      {!selectedDispute ? (
+         <div className="grid grid-cols-1 gap-6">
+            {disputes.map(d => (
+               <div key={d.id} className="hud-panel p-6 flex justify-between items-center border-purple-500/50 bg-gradient-to-r from-gray-900 to-black">
+                  <div><span className="text-orange-500 font-bold bg-orange-900/30 px-2 py-1 text-xs">ORDEN #{d.orderId}</span><h3 className="text-2xl font-black text-white uppercase mt-2">{d.item.title}</h3></div>
+                  <div className="text-right">
+                     {d.supportAgent ? ( d.supportAgent === user.uid ? <button onClick={() => setSelectedDispute(d)} className="btn-ff border-purple-400 px-6 py-3">ATENDER MI CASO</button> : <span className="text-purple-400 font-bold bg-purple-900/40 px-4 py-2 border-purple-500 rounded">TOMADO POR {d.supportAgentName}</span> ) : ( <button onClick={() => claimCase(d.id)} className="btn-secondary-ff border-purple-500 text-purple-300 px-6 py-3">ASIGNARME CASO</button> )}
+                  </div>
+               </div>
+            ))}
+         </div>
+      ) : (
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[75vh] animate-enter">
+            <div className="flex flex-col gap-4 overflow-y-auto pr-2">
+               <div className="bg-black/80 border-2 border-purple-600 p-6 rounded-lg shadow-[0_0_30px_rgba(128,0,128,0.2)]">
+                  <div className="flex justify-between border-b-2 border-purple-600 pb-4 mb-6"><h3 className="text-3xl font-gamer text-white"><FileWarning className="inline"/> DOSSIER</h3><button onClick={() => setSelectedDispute(null)} className="text-red-500 font-bold">CERRAR DOSSIER</button></div>
+                  <div className="bg-gray-900/80 p-4 rounded border-l-4 border-cyan-500 relative mb-4"><button onClick={banSeller} className="absolute top-3 right-3 text-red-500 font-black text-[10px]">BANEAR</button><h4 className="text-cyan-400 font-black mb-2 uppercase">VENDEDOR</h4><p>Admin: {selectedDispute.seller.adminName}</p><p>ID: {selectedDispute.seller.idNumber}</p></div>
+                  <div className="bg-gray-900/80 p-4 rounded border-l-4 border-orange-500"><h4 className="text-orange-400 font-black mb-2 uppercase">COMPRADOR</h4><p>Nombre: {selectedDispute.buyer.firstName}</p><p>ID: {selectedDispute.buyer.idNumber}</p></div>
+               </div>
+               <div className="bg-gray-950 border-2 border-gray-800 p-6 rounded-lg"><h4 className="text-gray-400 font-black mb-4 uppercase">Notas Secretas</h4><div className="flex gap-2"><input value={internalNote} onChange={e=>setInternalNote(e.target.value)} className="flex-grow bg-black border border-gray-700 text-white p-2"/><button onClick={addSecretNote} className="bg-purple-900/50 text-purple-400 px-4">GUARDAR</button></div></div>
+            </div>
+            <div className="flex flex-col h-full"><ChatSystem orderId={selectedDispute.id} currentUserRole="SOPORTE" currentUserId={user.uid} orderStatus={selectedDispute.status} onUpdateStatus={()=>{}} orderData={selectedDispute}/></div>
+         </div>
+      )}
+    </div>
+  );
+};
+
+const OrderTrackerView = ({ setView, showNotification, isMuted }) => {
+  const [trackId, setTrackId] = useState(''); const [trackEmail, setTrackEmail] = useState(''); const [foundOrder, setFoundOrder] = useState(null);
+  const handleTrack = async (e) => { 
+    e.preventDefault(); 
+    try { 
+      const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('orderId', '==', trackId.trim().toUpperCase())); 
+      const snap = await getDocs(q); 
+      if(snap.empty) { showNotification("ORDEN NO ENCONTRADA.", "error"); } 
+      else { 
+        const orderDoc = snap.docs[0].data(); 
+        if(orderDoc.buyer.email.trim().toLowerCase() === trackEmail.trim().toLowerCase()) { setFoundOrder({ dbId: snap.docs[0].id, ...orderDoc }); showNotification("SALA ENCONTRADA", "success"); } 
+        else { showNotification("Correo no coincide.", "error"); } 
+      } 
+    } catch(err) {} 
+  };
+  if(foundOrder) return (<div className="max-w-6xl mx-auto mt-10 bg-black/80 p-8 rounded-xl border-2 border-orange-500"><div className="flex justify-between mb-6"><h2 className="text-3xl font-gamer text-white">RADAR: #{foundOrder.orderId}</h2><button onClick={()=>setFoundOrder(null)} className="text-red-500 font-bold">CERRAR</button></div><div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[65vh]"><div className="bg-gray-900/80 p-6"><h3 className="text-xl text-cyan-400">OPERACIÓN</h3><p className="text-white">{foundOrder.item.title}</p><p className="text-yellow-500">${foundOrder.payment.totalUSD}</p></div><div className="flex flex-col h-full"><ChatSystem orderId={foundOrder.dbId} currentUserRole="COMPRADOR" currentUserId="GUEST_BUYER" orderStatus={foundOrder.status} onUpdateStatus={()=>{}} orderData={foundOrder}/></div></div></div>);
+  return (
+    <div className="max-w-2xl mx-auto mt-20 hud-panel p-10 border-cyan-500"><button onClick={() => setView('home')} className="text-gray-400 font-bold mb-6">&lt;&lt; VOLVER</button><div className="text-center mb-10"><Radar size={64} className="mx-auto text-cyan-500 animate-spin-slow"/><h2 className="text-5xl font-gamer text-white">Radar de Combate</h2></div><form onSubmit={handleTrack} className="space-y-6"><input required value={trackId} onChange={e=>setTrackId(e.target.value)} className="input-ff w-full p-5 text-xl uppercase" placeholder="Nº DE ORDEN (Ej: ORD-XXX)"/><input type="email" required value={trackEmail} onChange={e=>setTrackEmail(e.target.value)} className="input-ff w-full p-5 text-lg" placeholder="CORREO USADO EN LA COMPRA"/><button className="w-full btn-secondary-ff py-6 text-2xl font-black">UBICAR MI COMPRA</button></form></div>
+  );
+};
+
+const BuyerInventoryView = ({ user, setView }) => {
+  const [purchases, setPurchases] = useState([]);
+  useEffect(() => { 
+    if(!user) return; 
+    const unsub = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), where('buyer.email', '==', user.email)), (snap) => { setPurchases(snap.docs.map(d => ({id: d.id, ...d.data()}))); }); 
+    return () => unsub(); 
+  }, [user]);
+  return (<div className="max-w-6xl mx-auto mt-12"><div className="flex justify-between mb-12 border-b-4 border-blue-800 pb-8"><h2 className="text-5xl font-gamer text-white"><Package className="inline"/> MI ARMERÍA</h2><button onClick={() => setView('home')} className="btn-secondary-ff px-8 py-3">&lt;&lt; VOLVER</button></div><div className="grid grid-cols-1 md:grid-cols-2 gap-6">{purchases.map(p => (<div key={p.id} className="hud-panel p-6 border-blue-500/50"><span className="text-blue-400 font-bold">#{p.orderId}</span><h3 className="text-2xl font-black text-white">{p.item.title}</h3><p className="text-yellow-500">${p.payment.totalUSD}</p><p className="text-xs text-green-500 font-bold mt-2">{p.status}</p></div>))}</div></div>);
+};
+
+const WishlistView = ({ user, listings, setPurchaseItem, setView }) => {
+  const [wishlistIds, setWishlistIds] = useState([]);
+  useEffect(() => { 
+    if(!user) return; 
+    const unsub = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'wishlist', 'data'), (doc) => { if(doc.exists()) setWishlistIds(doc.data().items || []); }); 
+    return () => unsub(); 
+  }, [user]);
+  const removeWishlist = async (id) => { const newItems = wishlistIds.filter(i => i !== id); await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'wishlist', 'data'), { items: newItems }); };
+  const wishItems = listings.filter(l => wishlistIds.includes(l.id));
+  return (<div className="max-w-7xl mx-auto mt-12"><div className="flex justify-between mb-12 border-b-4 border-pink-800 pb-8"><h2 className="text-5xl font-gamer text-white"><Heart className="inline fill-pink-500 text-pink-500"/> BÓVEDA DE DESEOS</h2><button onClick={() => setView('home')} className="btn-secondary-ff px-8 py-3">&lt;&lt; VOLVER</button></div><div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-8">{wishItems.map((item) => (<div key={item.id} className="hud-panel flex flex-col h-full border-b-4 border-pink-500"><img src={item.images?.[0]} className="w-full h-48 object-cover"/><div className="p-4"><h3 className="font-tech text-white mb-2">{item.title}</h3><p className="text-yellow-500 font-gamer text-2xl">${item.price}</p><button onClick={()=>setPurchaseItem(item)} className="mt-4 w-full bg-yellow-500 text-black p-2 font-bold">COMPRAR</button><button onClick={()=>removeWishlist(item.id)} className="w-full text-red-500 mt-2 text-xs">ELIMINAR</button></div></div>))}</div></div>);
+};
+
 // --- FOOTER PROFESIONAL ---
 const Footer = ({ setView }) => (
   <footer className="bg-gradient-to-b from-black to-gray-950 pt-20 pb-12 border-t-4 border-red-900 mt-32 relative z-20 shadow-[0_-20px_50px_rgba(255,0,0,0.2)] font-sans">
