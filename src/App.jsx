@@ -2311,8 +2311,6 @@ export default function App() {
   const [viewSellerId, setViewSellerId] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [filterType, setFilterType] = useState('recent');
 
   useEffect(() => {
