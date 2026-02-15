@@ -31,7 +31,7 @@ import {
   Lock, Zap, Crosshair, Trophy, Diamond, X, Flame, 
   ScanFace, Upload, Eye, EyeOff, Globe, MapPin,
   CreditCard, Banknote, Receipt, Download, RefreshCw, MessageSquare, Send,
-  ImageIcon, CheckSquare, Star, Search, ThumbsUp, ThumbsDown, Minus,
+  ImageIcon, CheckSquare, Star, Search, ThumbsUp, ThumbsDown, Minus, Share2,
   Mail, Phone, Smartphone, UserCheck, Key, Shield, Headphones, Users,
   Facebook, Instagram, MessageCircle, Radar, Activity, PauseCircle, PlayCircle, 
   Gavel, Heart, Bell, Volume2, VolumeX, ShieldAlert, Award, Package, Ban, FileWarning,
@@ -2371,8 +2371,29 @@ const Navbar = ({ user, userData, setView, onLogout, isMuted, setIsMuted, unread
   </nav>
 );
 
-const ProductCard = ({ item, index, onBuy, onViewSeller }) => {
+const ProductCard = ({ item, index, onBuy, onViewSeller, showNotification }) => {
   const isDiscounted = item.discountActive;
+  
+  const handleShare = (e) => {
+    e.stopPropagation(); // Evita que se abra el perfil del vendedor al hacer clic en compartir
+    
+    // Construye el enlace único para este artículo
+    const shareUrl = `${window.location.origin}/?item=${item.id}`;
+    
+    if (navigator.share) {
+      // Si está en celular, abre el menú de compartir de Android/iOS (WhatsApp, Facebook, etc)
+      navigator.share({
+        title: item.title,
+        text: `🔥 Suministro Élite en Nexus Station: ${item.title}\n\n`,
+        url: shareUrl
+      }).catch(err => console.log('Error compartiendo:', err));
+    } else {
+      // Si está en PC, copia el enlace al portapapeles
+      navigator.clipboard.writeText(shareUrl);
+      if(showNotification) showNotification("ENLACE COPIADO AL PORTAPAPELES", "success");
+    }
+  };
+
   return (
     <div className={`hud-panel flex flex-col group h-full border-b-4 border-orange-500 animate-enter-delay-${(index % 3) + 1}`}>
       <div className="relative h-60 bg-black overflow-hidden clip-path-bottom-slant cursor-pointer" onClick={onViewSeller}>
@@ -2394,9 +2415,16 @@ const ProductCard = ({ item, index, onBuy, onViewSeller }) => {
           <span className="text-4xl font-gamer text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
             {formatCurrency(isDiscounted ? item.discountPrice : item.price)}
           </span>
-          <button onClick={(e)=>{e.stopPropagation(); onBuy();}} className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-black p-3 hover:scale-110 transition-transform clip-path-polygon border border-yellow-200 shadow-[0_0_15px_rgba(255,215,0,0.5)]">
-            <ShoppingBag size={20} strokeWidth={3} />
-          </button>
+          <div className="flex gap-2">
+            {/* BOTÓN DE COMPARTIR */}
+            <button onClick={handleShare} className="bg-gradient-to-br from-cyan-600 to-blue-800 text-white p-3 hover:scale-110 transition-transform clip-path-polygon border border-cyan-400 shadow-[0_0_15px_rgba(0,255,255,0.3)]" title="Compartir Enlace">
+              <Share2 size={20} strokeWidth={2} />
+            </button>
+            {/* BOTÓN DE COMPRAR */}
+            <button onClick={(e)=>{e.stopPropagation(); onBuy();}} className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-black p-3 hover:scale-110 transition-transform clip-path-polygon border border-yellow-200 shadow-[0_0_15px_rgba(255,215,0,0.5)]" title="Adquirir Suministro">
+              <ShoppingBag size={20} strokeWidth={3} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2691,6 +2719,41 @@ export default function App() {
      });
      return () => unsub();
   }, [user, isMuted]);
+
+  // LÓGICA DE DEEP LINKING (Enlaces compartidos por WhatsApp/Redes)
+  useEffect(() => {
+    const checkSharedLink = async () => {
+      // Leemos si la URL tiene "?item=..."
+      const params = new URLSearchParams(window.location.search);
+      const sharedItemId = params.get('item');
+      
+      if (sharedItemId) {
+        try {
+          // Buscamos ese artículo específico directo en Firebase
+          const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'listings', sharedItemId);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const itemData = { id: docSnap.id, ...docSnap.data() };
+            // Solo abrimos la ventana si el artículo no ha sido borrado o pausado
+            if (itemData.isActive !== false) {
+              setPurchaseItem(itemData);
+            } else {
+              showNotification("La publicación compartida ha sido pausada o ya no existe.", "error");
+            }
+          }
+          
+          // Limpiamos la URL (borramos el ?item=) para que si el usuario recarga la página, no se vuelva a abrir solo
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+        } catch (e) {
+          console.error("Error abriendo enlace compartido:", e);
+        }
+      }
+    };
+    
+    checkSharedLink();
+  }, []);
 
   const showNotification = (msg, type = 'success') => { 
     setNotification({ msg, type }); 
